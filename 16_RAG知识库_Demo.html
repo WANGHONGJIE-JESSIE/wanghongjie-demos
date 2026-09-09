@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-page-node-id="sURFczw8Z67ABKhXrNOC75">
+<head data-page-node-id="b9uS1vU7osn9B5qtAhhtly">
+<meta charset="UTF-8" data-page-node-id="UuAPQN1pgrlR60KX5JY07v">
+<title>招投标知识库 · RAG 检索演示（脱敏样例）</title>
+<style>
+  :root{
+    --bg:#F4F6FA; --card:#FFFFFF; --line:#E3E9F2; --line-2:#EEF2F8;
+    --ink:#1F2937; --ink-2:#5A6779; --ink-3:#8A94A6;
+    --blue:#1E5FA8; --blue-2:#4A90D9; --blue-3:#A8CCEE; --blue-bg:#EEF4FC;
+    --red:#C0392B; --red-bg:#FDECEA; --green:#17845A; --green-bg:#E7F5EE;
+    --amber:#C9821F; --amber-bg:#FDF3E3;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--ink);font-family:"Microsoft YaHei","微软雅黑","PingFang SC","Segoe UI",sans-serif;font-size:13px;padding:16px}
+  .app{max-width:1320px;margin:0 auto}
+
+  .hd{display:flex;align-items:flex-end;justify-content:space-between;background:var(--card);
+      border:1px solid var(--line);border-radius:10px;padding:13px 18px;margin-bottom:12px}
+  .hd h1{font-size:18px;font-weight:700}
+  .hd .sub{font-size:11.5px;color:var(--ink-3);margin-top:5px}
+  .badge{display:inline-block;background:var(--blue-bg);color:var(--blue);border:1px solid #D3E2F5;
+         border-radius:4px;padding:2px 8px;font-size:11px;font-weight:700;margin-left:6px}
+  .badge.g{background:var(--green-bg);color:var(--green);border-color:#C6E6D6}
+  .meta{text-align:right;font-size:11.5px;color:var(--ink-2);line-height:1.85}
+
+  .wrap{display:grid;grid-template-columns:300px 1fr;gap:12px;align-items:start}
+
+  .card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:13px 15px}
+  .card h2{font-size:13px;font-weight:700;margin-bottom:3px;display:flex;align-items:center;gap:7px}
+  .card .cs{font-size:11px;color:var(--ink-3);margin-bottom:9px}
+
+  .docs{max-height:560px;overflow:auto}
+  .doc{border:1px solid var(--line);border-radius:7px;padding:8px 10px;margin-bottom:7px;background:#FBFCFE}
+  .doc .t{font-size:11.5px;font-weight:700;line-height:1.5}
+  .doc .m{font-size:10.5px;color:var(--ink-3);margin-top:4px;display:flex;justify-content:space-between}
+  .doc.on{background:var(--blue-bg);border-color:#BFD6F0}
+
+  .ask{display:flex;gap:8px;margin-bottom:9px}
+  input[type=text]{flex:1;font-family:inherit;font-size:13px;padding:10px 13px;border:1px solid var(--line);
+                   border-radius:8px;outline:none;color:var(--ink)}
+  input[type=text]:focus{border-color:var(--blue-2);box-shadow:0 0 0 3px rgba(74,144,217,.12)}
+  button{font-family:inherit;font-size:13px;font-weight:700;padding:10px 22px;border:none;border-radius:8px;
+         background:var(--blue);color:#fff;cursor:pointer}
+  button:hover{background:#17497F}
+  .chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+  .chip{font-size:11.5px;padding:5px 11px;border:1px solid var(--line);border-radius:14px;background:#fff;
+        color:var(--ink-2);cursor:pointer}
+  .chip:hover{border-color:var(--blue-2);color:var(--blue);background:var(--blue-bg)}
+
+  .proc{display:none;background:#FAFCFF;border:1px dashed #CFDCEC;border-radius:7px;padding:9px 12px;
+        font-size:11.5px;color:var(--ink-2);line-height:1.9;margin-bottom:11px}
+  .proc b{color:var(--blue)}
+  .proc .tk{display:inline-block;background:#fff;border:1px solid var(--line);border-radius:3px;
+            padding:1px 6px;margin:0 3px;font-size:11px;color:var(--ink-2)}
+
+  .hit{border:1px solid var(--line);border-radius:8px;padding:10px 12px;margin-bottom:8px;background:#fff}
+  .hit .hh{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+  .hit .src{font-size:11.5px;font-weight:700;color:var(--blue)}
+  .hit .sc{font-size:10.5px;color:var(--ink-3)}
+  .hit .scb{width:64px;height:5px;background:var(--line-2);border-radius:3px;overflow:hidden;display:inline-block;vertical-align:middle;margin-left:6px}
+  .hit .scb i{display:block;height:100%;background:var(--blue-2)}
+  .hit .tx{font-size:12px;line-height:1.85;color:var(--ink-2)}
+  .hit mark{background:#FFF2B8;color:var(--ink);padding:0 1px;border-radius:2px}
+
+  .ans{background:linear-gradient(180deg,#F7FAFF,#FFFFFF);border:1px solid #CFE0F3;border-left:3px solid var(--blue);
+       border-radius:8px;padding:13px 15px;font-size:12.5px;line-height:1.95;color:var(--ink)}
+  .ans .hd2{font-size:12px;font-weight:700;color:var(--blue);margin:9px 0 3px}
+  .ans .hd2:first-child{margin-top:0}
+  .ans ul{margin:3px 0 0 18px}
+  .ans li{margin-bottom:3px}
+  .ans .cite{font-size:11px;color:var(--ink-3);margin-top:9px;padding-top:8px;border-top:1px dashed var(--line)}
+  .empty{background:var(--amber-bg);border:1px solid #F0DCB4;border-left:3px solid var(--amber);
+         border-radius:8px;padding:13px 15px;font-size:12.5px;line-height:1.9;color:#7A5312}
+
+  .reds{margin-top:12px;background:var(--red-bg);border:1px solid #F3D2CD;border-radius:8px;padding:11px 15px}
+  .reds h3{font-size:12px;color:var(--red);margin-bottom:6px}
+  .reds ol{margin-left:18px;font-size:11.5px;color:#8C3A31;line-height:2}
+
+  .ft{margin-top:12px;font-size:11px;color:var(--ink-3);text-align:center;line-height:1.9}
+  @media print{body{background:#fff} .docs{max-height:none}}
+</style>
+</head>
+<body data-page-node-id="TLnaKUhBVFZ9T4GMVgc54x">
+<div class="app" data-page-node-id="vCIDxoBDxIiFCXxJwa8DAJ">
+
+  <div class="hd" data-page-node-id="wrOpR7HfgZTCcYCQ8GmjnC">
+    <div data-page-node-id="xuRMxhDwycG92B9DuqeHUw">
+      <h1 data-page-node-id="o3BKjPgWYlOXzJHMemImWY">招投标知识库 · RAG 智能问答 <span class="badge" data-page-node-id="pExEFpz0tFve0Ouu4xBluH">脱敏样例</span><span class="badge g" data-page-node-id="gwh4FOWtGBu8adllxcFU8s">本地运行 · 不联网</span></h1>
+      <div class="sub" data-page-node-id="rqiSZMAXL32ZpA87scsC5Q">历史标书 / 政策条款 / 中标案例 / 技术规范 统一入库，按语义检索 · 新人也能用上老师傅的经验</div>
+    </div>
+    <div class="meta" data-page-node-id="YC08zLkq9xW1y9lKOwBPaa">
+      <div data-page-node-id="dADzBflflp4hUpRPmUsbMq">知识库：<b id="dcount" data-page-node-id="3Aj5YdbbbF8ReYWB0Chgya">—</b> 篇文档 / <b id="ccount" data-page-node-id="Oz2PVer2a00YnrK3FyEmKp">—</b> 个片段</div>
+      <div data-page-node-id="FfmjdqEbjAdkWM2UeXOT1E">检索：本地向量化 · 无数据外传</div>
+    </div>
+  </div>
+
+  <div class="wrap" data-page-node-id="0FsWN1bqCiENeeLKxfeBR3">
+    <!-- 左：知识库 -->
+    <div class="card" data-page-node-id="YHHV5JetBBDOLC3FlwLxFf">
+      <h2 data-page-node-id="aiD0fDaeWCusQ7gw00HSaY">知识库目录</h2>
+      <div class="cs" data-page-node-id="KMJ0MImPER8ZZykq1iXQhB">命中文档会高亮显示</div>
+      <div class="docs" id="docs" data-page-node-id="7BuepryhBiogcdPCUeeaBG"></div>
+    </div>
+
+    <!-- 右：问答 -->
+    <div class="card" data-page-node-id="mlsGz3aNg314K8r0AXELmE">
+      <h2 data-page-node-id="ArRTt2iiCuFsVr21GlH2C0">语义检索问答</h2>
+      <div class="cs" data-page-node-id="Ekh2HuDRbfLcNjW13xd2gR">输入自然语言问题，系统在本地知识库中检索并生成带引用的回答</div>
+
+      <div class="ask" data-page-node-id="Y76JMPWQuASMlYGssG09hJ">
+        <input type="text" id="q" placeholder="例如：投标保证金什么时候退？什么情况会废标？技术标怎么打分？" data-page-node-id="gSYiu9TAfzJbnF25rWR4UX" />
+        <button onclick="ask()" data-page-node-id="kGVj18fuwfBpbRO5EdEEx9">检索并回答</button>
+      </div>
+
+      <div class="chips" id="chips" data-page-node-id="9sfDnmonCWfwqiNcwrlxWR"></div>
+
+      <div class="proc" id="proc" data-page-node-id="prswiBO1YYcp8eYDLQIQb7"></div>
+
+      <div id="hits" data-page-node-id="HmDr8wbrp7k9olaH6Z2zUj"></div>
+      <div id="ans" data-page-node-id="tbsoNk0azFyNg7SJLJ9AlZ"></div>
+
+      <div class="reds" data-page-node-id="P1FxPrM0jh6fFVqEnegUAn">
+        <h3 data-page-node-id="kRVGYt7MfqBegmOXNAy3rR">⚠️ AI 三条红线（本 Demo 的合规设计）</h3>
+        <ol data-page-node-id="cRBKjxDpGpIpcw2B8jGmEt">
+          <li data-page-node-id="MZDBs6tYv2Oz6KFGFvpWTs"><b data-page-node-id="gC7gKtD97gxRJJLQlGKEHe">数据不出域</b>：本 Demo 全部在本地浏览器完成向量化与检索，不调用任何公网接口，真实部署可私有化。</li>
+          <li data-page-node-id="fSg6eAWFhR7aZoTSWXif9D"><b data-page-node-id="N3xfcl4uCYaHTOXQ5rz07Z">结果必须校验</b>：每条回答都附来源文档与相似度分数，可追溯到原始条款；未命中时明确告知，<b data-page-node-id="ZkAGnAkQmXAwOc4EiIki7j">不编造</b>。</li>
+          <li data-page-node-id="EulqH1p7SrrXB5FJP8EU13"><b data-page-node-id="F8aCCF4jI3B94C1xtJQpF7">口径先治理</b>：文档入库前先做脱敏、分版本与有效期标记，过期条款自动降权。</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+
+  <div class="ft" data-page-node-id="2LUyADaWtdH6UyP4qwD9IH">
+    王宏杰 ｜ 19 年 LED 光电与能源电力行业 · 9 年经营分析 · 2024 年起系统进修 AI（RAG / Agent / Text-to-SQL）<br data-page-node-id="sGT5LiHSeVLyklxyPrlxQn">
+    ⚠️ 本页全部文档为教学演示用虚构样例（客户、项目、金额均已脱敏），不涉及任何真实商业信息
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   脱敏演示知识库（全部为教学虚构样例）
+   ============================================================ */
+var DOCS = [
+{
+  id:'D01', title:'投标资格要求通用条款（示例）', type:'政策条款', date:'2026-03',
+  chunks:[
+    '投标人须为在中华人民共和国境内依法注册的独立法人，具有独立承担民事责任的能力，营业执照经营范围须涵盖本次采购内容。',
+    '投标人须提供近三年（2023 年 1 月至今）至少 2 个同类项目业绩证明，单项合同金额不低于 200 万元，须附合同关键页与验收证明复印件。',
+    '财务状况要求：提供近两年经审计的财务报告，资产负债率不高于 70%，且近一年不得出现经营性净现金流为负的情形。',
+    '信誉要求：近三年内无重大违法记录，未被列入失信被执行人名单、重大税收违法案件当事人名单，须提供信用中国查询截图（查询日期须在投标截止日前 10 日内）。'
+  ]
+},
+{
+  id:'D02', title:'商务标评分细则（示例）', type:'评分规则', date:'2026-03',
+  chunks:[
+    '商务标满分 30 分。价格分采用低价优先法：满足招标文件要求且投标价格最低的为评标基准价，其价格分为满分；其他投标人的价格分统一按「基准价 ÷ 投标价 × 30」计算。',
+    '价格分计算须先做修正：投标报价大小写不一致的以大写为准，单价与总价不一致的以单价为准修正总价，修正后的报价须经投标人书面确认。',
+    '低于成本价的判定：评标委员会认为投标报价明显低于其他报价的，应当要求其在评标现场合理时间内提供书面说明并附成本测算依据，不能证明其报价合理性的，按无效投标处理。',
+    '商务标另设 5 分履约能力分：按近三年同类项目业绩数量计分，每个有效业绩 1 分，最高 5 分，须提供合同与验收证明。'
+  ]
+},
+{
+  id:'D03', title:'技术标评审要点（示例）', type:'评分规则', date:'2026-03',
+  chunks:[
+    '技术标满分 55 分，评审维度包括：技术方案完整性（15 分）、关键技术参数响应（20 分）、项目实施方案与进度保障（10 分）、售后服务与培训（10 分）。',
+    '关键技术参数须逐条响应，标注「正偏离」「无偏离」「负偏离」。带「★」号的关键参数出现负偏离的，技术标总分扣 5 分／项；出现 3 项及以上负偏离的，视为未实质性响应。',
+    '技术方案评审重点关注：需求理解是否准确、技术路线是否可行、与现有系统的兼容性方案、风险识别与应对措施是否具体可执行。',
+    '实施方案须提供项目组织架构、关键节点计划（含里程碑与交付物）、人员投入计划（须列明项目经理资历与投入比例）。'
+  ]
+},
+{
+  id:'D04', title:'废标（无效投标）情形清单（示例）', type:'风险清单', date:'2026-04',
+  chunks:[
+    '投标文件未按要求密封、未加盖投标人公章及法定代表人（或授权代表）签字的，按废标处理。',
+    '投标报价超过采购预算金额或最高限价的，作废标处理（无效投标）；报价出现缺项、漏项且未作说明的，评标委员会可要求澄清，澄清后仍不完整的按废标处理。',
+    '投标文件载明的招标项目完成期限超过招标文件规定期限的，视为废标（未实质性响应招标文件要求）。',
+    '投标人提供虚假材料谋取中标的，其中标无效并作废标处理，同时列入不良行为记录名单，一至三年内禁止参加政府采购活动。',
+    '不同投标人的投标文件异常一致或投标报价呈规律性差异的，视为投标人相互串通投标，其投标均作废标处理（无效）。'
+  ]
+},
+{
+  id:'D05', title:'投标保证金管理办法（示例）', type:'政策条款', date:'2026-02',
+  chunks:[
+    '投标保证金金额一般不超过采购项目预算金额的 2%，最高不超过 80 万元，须在投标截止时间前以电汇或保函形式提交。',
+    '未中标人的投标保证金，招标人应当在中标通知书发出后 5 个工作日内退还；中标人的保证金在签订合同后 5 个工作日内退还，或按招标文件约定转为履约保证金。',
+    '投标人在投标截止时间后撤回投标文件的，招标人可以不退还投标保证金；投标有效期内撤销投标的，同样适用。',
+    '保证金退还一律退至投标人原缴纳账户，不得退至第三方账户；以保函形式提交的，原件在退还时同步解除。'
+  ]
+},
+{
+  id:'D06', title:'LED 显示屏项目技术规格书模板（示例）', type:'技术规范', date:'2025-11',
+  chunks:[
+    '显示单元：像素间距 ≤ 2.5mm，亮度 ≥ 800cd/㎡（可调），对比度 ≥ 5000:1，刷新率 ≥ 3840Hz，灰度等级 16bit，须提供第三方检测报告。',
+    '防护与可靠性：整屏防护等级不低于 IP65（户外）/ IP43（室内），MTBF ≥ 10000 小时，支持 7×24 小时连续运行，具备逐点校正与故障自诊断功能。',
+    '控制系统须支持冗余备份：主控与备控自动切换时间 ≤ 5 秒，断电后恢复供电可自动恢复播放，支持远程集中管控与分屏分区管理。',
+    '节能要求：整屏功耗较上一代产品降低不低于 15%，须提供典型工况下的实测功耗数据与节能计算书。'
+  ]
+},
+{
+  id:'D07', title:'光伏储能项目交付周期与验收标准（示例）', type:'技术规范', date:'2026-01',
+  chunks:[
+    '标准交付周期：合同签订后 45 日内完成设备到场，90 日内完成安装调试，120 日内完成并网验收；逾期违约金按合同总额 0.5‰/日计，上限 5%。',
+    '系统效率验收：储能系统综合效率（RTE）不低于 88%，光伏系统首年衰减不超过 2%，25 年衰减不超过 20%，须出具第三方检测报告。',
+    '并网验收须提供：并网调度协议、电力业务许可证（如需）、继电保护定值单、电能质量测试报告、消防验收意见书。',
+    '质保期：整套系统 5 年，电芯 10 年或 6000 次循环（以先到为准），质保期内可用率承诺不低于 98%。'
+  ]
+},
+{
+  id:'D08', title:'历史中标案例：华东某市政显示项目（脱敏）', type:'中标案例', date:'2025-08',
+  chunks:[
+    '项目概况：华东某市政广场显示屏改造，合同额约 860 万元，工期 75 天，参与投标 6 家，我方以技术标第一、商务标第二综合得分第一中标。',
+    '中标关键因素一：针对「★」号关键参数（刷新率、防护等级）全部做到正偏离，并提供了第三方检测报告原件，技术标拿到 20 分满分中的 18 分。',
+    '中标关键因素二：报价策略采用「主体设备保底价 + 增值服务溢价」结构，将 3 年运维服务打包计入，既保住价格分，又锁定了后续收入。',
+    '教训：首轮投标文件漏附授权代表身份证复印件被要求澄清，虽未废标但影响了评标印象——此后所有标书统一使用出标前检查清单（共 32 项）。'
+  ]
+},
+{
+  id:'D09', title:'历史中标案例：华南某能源服务项目（脱敏）', type:'中标案例', date:'2025-05',
+  chunks:[
+    '项目概况：华南某工业园区工商业储能项目，合同额约 1240 万元，采用「设备 + 运维 + 收益分成」模式，合作期 10 年。',
+    '中标关键因素：在技术方案中提出分阶段扩容设计（一期 5MWh、预留二期接口），既降低了客户首期投入，又锁定了后续扩容订单。',
+    '风险处置：合同中明确约定电价政策变动超过 10% 时双方重新协商分成比例，规避了峰谷价差收窄导致的收益风险。',
+    '复盘：该项目验证了「低价拿入口、服务赚长钱」的模式，但须注意现金流——设备款占 70% 且回款周期 9 个月，需提前安排资金。'
+  ]
+},
+{
+  id:'D10', title:'合同风险条款 review 要点（示例）', type:'风险清单', date:'2026-04',
+  chunks:[
+    '付款条款红线：预付款比例低于 20% 且无进度款的，须重新测算现金流；验收款占比超过 40% 的，须明确验收时限与「逾期视同验收」条款。',
+    '违约责任对等：仅约定我方逾期违约金而未约定甲方逾期付款违约金的，应提出对等修改；违约金上限原则上不超过合同总额的 10%。',
+    '质保金比例超过 5% 或返还期限超过 24 个月的，须评估资金占用成本并计入报价；鼓励以保函替代质保金。',
+    '知识产权条款：涉及定制开发的，须明确成果归属与后续使用权限，避免被要求一次性买断全部源代码与著作权。'
+  ]
+},
+{
+  id:'D11', title:'售后服务与质保承诺模板（示例）', type:'技术规范', date:'2025-12',
+  chunks:[
+    '响应时效承诺：接到故障通知后 2 小时内响应，24 小时内到场（省内）/ 48 小时内到场（省外），一般故障 24 小时内修复，重大故障 72 小时内修复或提供备用设备。',
+    '保修期内提供每年不少于 2 次的免费巡检，并出具巡检报告；提供 7×24 小时技术热线与远程诊断支持。',
+    '培训承诺：为甲方提供不少于 3 场次、每场不少于 4 小时的操作与维护培训，并提供中文操作手册、维护手册各 3 套及电子版。',
+    '备件保障：承诺在质保期内以不高于投标单价的 90% 供应备件，并保证停产后 5 年内持续供应。'
+  ]
+},
+{
+  id:'D12', title:'招投标法律法规要点摘录（示意性整理）', type:'政策条款', date:'2026-05',
+  chunks:[
+    '招标公告应在指定媒体发布，自招标文件发出之日起至投标截止时间止，最短不得少于 20 日；招标文件澄清或修改须在截止日前 15 日发出。',
+    '评标委员会由招标人代表和技术、经济等方面专家组成，成员人数为 5 人以上单数，其中技术、经济专家不得少于成员总数的三分之二。',
+    '中标候选人应当不超过 3 个并标明排序；招标人应在收到评标报告之日起 3 日内公示中标候选人，公示期不少于 3 日。',
+    '投标人认为招标文件、采购过程或中标结果使自身权益受损的，可在知道或应知其权益受损之日起 7 个工作日内提出书面质疑。'
+  ]
+}
+];
+
+/* ============================================================
+   极简中文检索：字符 bigram + TF-IDF + 余弦相似度
+   ============================================================ */
+var CORPUS = [];
+DOCS.forEach(function(doc){
+  doc.chunks.forEach(function(ck, i){
+    CORPUS.push({docId:doc.id, title:doc.title, type:doc.type, idx:i+1, text:ck});
+  });
+});
+
+function tokenize(s){
+  s = String(s).toLowerCase();
+  var toks = [];
+  var zh = s.match(/[\u4e00-\u9fa5]+/g) || [];
+  zh.forEach(function(seg){
+    for(var i=0;i<seg.length;i++){
+      toks.push(seg[i]);
+      if(i+1<seg.length) toks.push(seg.substr(i,2));
+    }
+  });
+  var en = s.match(/[a-z0-9]+/g) || [];
+  en.forEach(function(w){ if(w.length>1) toks.push(w); });
+  return toks;
+}
+function tf(toks){
+  var m = {};
+  toks.forEach(function(t){ m[t] = (m[t]||0)+1; });
+  return m;
+}
+var DOC_TF = CORPUS.map(function(c){ return tf(tokenize(c.text)); });
+var DF = {};
+DOC_TF.forEach(function(m){ Object.keys(m).forEach(function(t){ DF[t] = (DF[t]||0)+1; }); });
+var N = CORPUS.length;
+function idf(t){ return Math.log((N+1)/((DF[t]||0)+1)) + 1; }
+var DOC_VEC = DOC_TF.map(function(m){
+  var v = {}, norm = 0;
+  Object.keys(m).forEach(function(t){
+    var w = (1 + Math.log(m[t])) * idf(t);
+    v[t] = w; norm += w*w;
+  });
+  norm = Math.sqrt(norm) || 1;
+  Object.keys(v).forEach(function(t){ v[t] = v[t]/norm; });
+  return v;
+});
+function vecOf(q){
+  var m = tf(tokenize(q)), v = {}, norm = 0;
+  Object.keys(m).forEach(function(t){
+    var w = (1 + Math.log(m[t])) * (idf(t) || Math.log(N+1)+1);
+    v[t] = w; norm += w*w;
+  });
+  norm = Math.sqrt(norm) || 1;
+  Object.keys(v).forEach(function(t){ v[t] = v[t]/norm; });
+  return v;
+}
+function search(q){
+  var v = vecOf(q);
+  var res = CORPUS.map(function(c, i){
+    var d = DOC_VEC[i], s = 0;
+    Object.keys(v).forEach(function(t){ if(d[t]) s += v[t]*d[t]; });
+    return {chunk:c, score:s};
+  });
+  res.sort(function(a,b){ return b.score - a.score; });
+  return res.slice(0,3);
+}
+function highlight(text, q){
+  var keys = (q.match(/[\u4e00-\u9fa5]{2,4}/g)||[]);
+  var out = text;
+  keys.forEach(function(k){
+    if(out.indexOf(k) >= 0){
+      out = out.split(k).join('\u0001'+k+'\u0002');
+    }
+  });
+  return out.replace(/\u0001/g,'<mark>').replace(/\u0002/g,'</mark>');
+}
+
+/* ============================================================
+   渲染
+   ============================================================ */
+var SAMPLES = [
+  '投标保证金什么时候退？',
+  '什么情况会被废标？',
+  '商务标的价格分怎么算？',
+  '技术标带星号的参数负偏离会怎样？',
+  'LED 显示屏的防护等级要求是什么？',
+  '储能项目的质保期和可用率怎么承诺？',
+  '合同的付款条款有哪些红线？',
+  '历史上有中标过的市政显示项目吗？'
+];
+
+function renderDocs(hitIds){
+  document.getElementById('docs').innerHTML = DOCS.map(function(d){
+    var on = hitIds && hitIds.indexOf(d.id) >= 0;
+    return '<div class="doc'+(on?' on':'')+'"><div class="t">'+d.title+'</div>'+
+           '<div class="m"><span>'+d.type+'</span><span>'+d.chunks.length+' 片段 · '+d.date+'</span></div></div>';
+  }).join('');
+}
+function renderChips(){
+  document.getElementById('chips').innerHTML = SAMPLES.map(function(s){
+    return '<span class="chip" onclick="quick(\''+s.replace(/'/g,"")+'\')">'+s+'</span>';
+  }).join('');
+}
+function quick(s){ document.getElementById('q').value = s; ask(); }
+
+function ask(){
+  var q = document.getElementById('q').value.trim();
+  if(!q){ return; }
+  var t0 = performance.now();
+  var hits = search(q);
+  var ms = (performance.now() - t0).toFixed(1);
+  var toks = Array.from(new Set(tokenize(q))).slice(0, 14);
+
+  document.getElementById('proc').style.display = 'block';
+  document.getElementById('proc').innerHTML =
+    '<b>检索过程</b>｜查询分词：' + toks.map(function(t){return '<span class="tk">'+t+'</span>';}).join('') +
+    '<br>候选片段 <b>'+CORPUS.length+'</b> 个 → 余弦相似度排序 → 取 Top 3 ｜ 耗时 <b>'+ms+' ms</b> ｜ '+
+    '全部在本地完成，未联网调用任何外部接口';
+
+  var top = hits[0], hitIds = hits.map(function(h){ return h.chunk.docId; });
+  renderDocs(hitIds);
+
+  if(top.score < 0.06){
+    document.getElementById('hits').innerHTML = '';
+    document.getElementById('ans').innerHTML =
+      '<div class="empty"><b>知识库中未检索到足够相关的内容。</b><br>'+
+      '最高相似度仅 '+(top.score*100).toFixed(1)+'%，低于可信阈值（6%），因此系统<b>不会生成回答</b>——'+
+      '这正是 RAG 与通用大模型的关键区别：<b>宁可说「不知道」，也不编造。</b><br>'+
+      '建议：将该问题涉及的文件补充入库，或换用更贴近原文的关键词重试。</div>';
+    return;
+  }
+
+  document.getElementById('hits').innerHTML = '<div class="cs" style="margin:2px 0 7px">命中片段（Top 3）</div>' +
+    hits.map(function(h, i){
+      var w = Math.min(100, Math.round(h.score * 260));
+      return '<div class="hit"><div class="hh"><div class="src">['+(i+1)+'] '+h.chunk.title+
+             ' <span style="color:var(--ink-3);font-weight:400">· 第 '+h.chunk.idx+' 条 · '+h.chunk.type+'</span></div>'+
+             '<div class="sc">相似度 '+(h.score*100).toFixed(1)+'%<span class="scb"><i style="width:'+w+'%"></i></span></div></div>'+
+             '<div class="tx">'+highlight(h.chunk.text, q)+'</div></div>';
+    }).join('');
+
+  var related = hits.slice(1).filter(function(h){ return h.score >= 0.06; });
+  var ans = '<div class="hd2">回答</div>' + top.chunk.text +
+            (related.length ? '<div class="hd2">相关参考</div><ul>' +
+              related.map(function(h){ return '<li>'+h.chunk.text+'<span style="color:var(--ink-3)">（'+h.chunk.title+'·第 '+h.chunk.idx+' 条）</span></li>'; }).join('') +
+              '</ul>' : '') +
+            '<div class="hd2">落地建议</div>' +
+            '<ul><li>本回答可直接用于标书初稿，但<b>正式出标前须以招标文件原文为准</b>——条款存在地区与年度差异。</li>'+
+            '<li>建议将对应原文条款加入出标前检查清单，避免重复踩坑。</li></ul>'+
+            '<div class="cite">来源：'+top.chunk.title+'（'+top.chunk.type+' · '+top.chunk.date+'）第 '+top.chunk.idx+' 条 ｜ '+
+            '相似度 '+(top.score*100).toFixed(1)+'% ｜ 检索耗时 '+ms+' ms ｜ '+
+            '<b>本回答仅基于已入库文档生成，未命中时不编造</b></div>';
+  document.getElementById('ans').innerHTML = '<div class="ans">'+ans+'</div>';
+}
+
+document.getElementById('dcount').textContent = DOCS.length;
+document.getElementById('ccount').textContent = CORPUS.length;
+renderDocs(null);
+renderChips();
+document.getElementById('q').addEventListener('keydown', function(e){ if(e.key === 'Enter') ask(); });
+document.getElementById('q').value = '投标保证金什么时候退？';
+ask();
+</script>
+</body>
+</html>

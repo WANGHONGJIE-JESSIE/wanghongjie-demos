@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-page-node-id="ACC5ORfHSE7ThHOuv2jp1g">
+<head data-page-node-id="m0PKVN6JQDxlLwoL7VYOPP">
+<meta charset="UTF-8" data-page-node-id="l7WWHEGLs8tlcxMJ38Yeby">
+<title>中小企业经营驾驶舱 · 演示数据（脱敏）</title>
+<style>
+  :root{
+    --bg:#F4F6FA; --card:#FFFFFF; --line:#E3E9F2; --line-2:#EEF2F8;
+    --ink:#1F2937; --ink-2:#5A6779; --ink-3:#8A94A6;
+    --blue:#1E5FA8; --blue-2:#4A90D9; --blue-3:#A8CCEE; --blue-bg:#EEF4FC;
+    --red:#C0392B; --red-bg:#FDECEA;
+    --green:#17845A; --green-bg:#E7F5EE;
+    --amber:#C9821F; --amber-bg:#FDF3E3;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    background:var(--bg); color:var(--ink);
+    font-family:"Microsoft YaHei","微软雅黑","PingFang SC","Segoe UI",sans-serif;
+    font-size:13px; padding:18px;
+  }
+  .app{max-width:1320px;margin:0 auto}
+
+  /* header */
+  .hd{display:flex;align-items:flex-end;justify-content:space-between;
+      background:var(--card);border:1px solid var(--line);border-radius:10px;
+      padding:14px 18px;margin-bottom:12px}
+  .hd h1{font-size:19px;font-weight:700;letter-spacing:.5px}
+  .hd .sub{font-size:11.5px;color:var(--ink-3);margin-top:5px}
+  .hd .right{text-align:right;font-size:11.5px;color:var(--ink-2);line-height:1.9}
+  .badge{display:inline-block;background:var(--blue-bg);color:var(--blue);
+         border:1px solid #D3E2F5;border-radius:4px;padding:2px 8px;font-size:11px;font-weight:700}
+  .badge.warn{background:var(--amber-bg);color:var(--amber);border-color:#F0DCB4}
+  select{font-family:inherit;font-size:12.5px;padding:5px 10px;border:1px solid var(--line);
+         border-radius:6px;background:#fff;color:var(--ink);cursor:pointer;outline:none}
+  select:focus{border-color:var(--blue-2)}
+
+  /* kpi */
+  .kpis{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-bottom:12px}
+  .kpi{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 14px;position:relative;overflow:hidden}
+  .kpi::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--blue-2)}
+  .kpi.k2::before{background:var(--green)}
+  .kpi.k3::before{background:var(--amber)}
+  .kpi.k4::before{background:var(--blue)}
+  .kpi.k5::before{background:#7A5CC6}
+  .kpi.k6::before{background:var(--red)}
+  .kpi .lb{font-size:11.5px;color:var(--ink-3);margin-bottom:6px}
+  .kpi .vl{font-size:23px;font-weight:700;letter-spacing:-.5px;line-height:1.1}
+  .kpi .vl small{font-size:12px;font-weight:600;color:var(--ink-2);margin-left:2px}
+  .kpi .dt{font-size:11px;margin-top:6px;color:var(--ink-3)}
+  .up{color:var(--red);font-weight:700} .down{color:var(--green);font-weight:700}
+
+  /* grid */
+  .grid{display:grid;grid-template-columns:1.55fr 1fr;gap:12px}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:13px 15px 11px}
+  .card h2{font-size:13px;font-weight:700;margin-bottom:2px;display:flex;align-items:center;gap:7px}
+  .card h2 .tag{font-size:10px;font-weight:600;color:var(--ink-3);background:var(--line-2);
+                border-radius:3px;padding:2px 6px;letter-spacing:0}
+  .card .cs{font-size:11px;color:var(--ink-3);margin-bottom:8px}
+  .legend{display:flex;gap:14px;font-size:11px;color:var(--ink-2);margin:2px 0 6px}
+  .legend i{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+
+  table{width:100%;border-collapse:collapse;font-size:12px}
+  th{text-align:left;font-weight:600;color:var(--ink-3);font-size:11px;
+     padding:6px 8px;border-bottom:1px solid var(--line);background:#FAFCFF}
+  td{padding:7px 8px;border-bottom:1px solid var(--line-2)}
+  tr:last-child td{border-bottom:none}
+  .pill{display:inline-block;border-radius:4px;padding:1px 7px;font-size:10.5px;font-weight:700}
+  .pill.r{background:var(--red-bg);color:var(--red)}
+  .pill.a{background:var(--amber-bg);color:var(--amber)}
+  .pill.g{background:var(--green-bg);color:var(--green)}
+  .num{text-align:right;font-variant-numeric:tabular-nums}
+
+  /* funnel */
+  .fnl{display:flex;flex-direction:column;gap:5px;margin-top:4px}
+  .frow{display:flex;align-items:center;gap:9px}
+  .fbar{height:26px;border-radius:3px;display:flex;align-items:center;justify-content:flex-end;
+        padding-right:9px;color:#fff;font-size:11.5px;font-weight:700}
+
+  /* bars */
+  .brow{display:grid;grid-template-columns:74px 1fr 74px;align-items:center;gap:8px;margin-bottom:7px;font-size:11.5px}
+  .btrk{background:var(--line-2);border-radius:3px;height:15px;overflow:hidden}
+  .bfil{height:100%;border-radius:3px}
+  .bval{text-align:right;color:var(--ink-2);font-variant-numeric:tabular-nums}
+
+  .note{margin-top:10px;background:#FAFCFF;border:1px solid var(--line);border-left:3px solid var(--blue-2);
+        border-radius:6px;padding:9px 12px;font-size:11.5px;color:var(--ink-2);line-height:1.75}
+  .ft{margin-top:12px;font-size:11px;color:var(--ink-3);line-height:1.9;text-align:center}
+
+  @media print{
+    body{background:#fff;padding:0}
+    .app{max-width:none}
+    .card,.kpi,.hd{break-inside:avoid}
+    select{border:none;background:transparent}
+  }
+  @page{size:A3 landscape;margin:8mm}
+</style>
+</head>
+<body data-page-node-id="037Q9ZQM2olTNlGRwrG2z8">
+<div class="app" data-page-node-id="b6x0lPGsDDFYbuPkC3MFlD">
+
+  <div class="hd" data-page-node-id="vyKVC8GZoT95ekorrlix3t">
+    <div data-page-node-id="nBhT2yv12DZG4UBgQJYfZm">
+      <h1 data-page-node-id="6GVqoEMmrfplSGr0gqEUKC">中小企业经营驾驶舱 <span class="badge" data-page-node-id="RTxYwhe0ArEuO6DXAGsHQf">演示数据 · 已脱敏</span></h1>
+      <div class="sub" data-page-node-id="DZ9yuzrkUol4ZJ362MyvyX">客户 / 区域 / 项目均为虚构代称，不含任何真实企业、报价与成本信息</div>
+    </div>
+    <div class="right" data-page-node-id="FkGTnWNrcfKLcQMKHBEptw">
+      <div data-page-node-id="V070gGCM4nUYmsXA8nU8bu">数据截止：<b data-page-node-id="8OzfUUOofHwAGD4jEmfrVB">2026-09-08</b>　更新频率：每日 08:00</div>
+      <div data-page-node-id="H5mq6vP5dWEh221imdjNoh">视角筛选：
+        <select id="regionSel" data-page-node-id="yLCbo6rA7Au9Gy7x4LgwfQ">
+          <option value="all" data-page-node-id="G6YAy82ORK0ZYvxnyPWaxg">全公司</option>
+          <option value="华东" data-page-node-id="qltWNvsT0DhoX6paUVyfp2">华东区</option>
+          <option value="华南" data-page-node-id="IkSm3Y7HAYZ0jJoW95H4rR">华南区</option>
+          <option value="华北" data-page-node-id="7vviB3uo6NAdxA4GB05Nh4">华北区</option>
+          <option value="西南" data-page-node-id="Z3JLi97GHPb3nVNLpUQ8YB">西南区</option>
+          <option value="西北" data-page-node-id="fsRmBAvWctftT79LUHVm96">西北区</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <div class="kpis" id="kpis" data-page-node-id="mkOPNIvECsc4ocyHyGKFLk"></div>
+
+  <div class="grid" data-page-node-id="wXfHaPOnmfZoBPSfVxCNC5">
+    <div class="card" data-page-node-id="FotMbFTWRmt8kjhopHuHfX">
+      <h2 data-page-node-id="UGwK5j2ZTbaKZ90X2XPW8B">营收趋势与毛利率 <span class="tag" data-page-node-id="ERnv2CUkqsznE9MHIkZdoQ">月度</span></h2>
+      <div class="cs" data-page-node-id="M6TbH8679ztdGYRwYE4uVq">柱：本期 / 去年同期（万元）　线：毛利率（%，右轴）</div>
+      <div class="legend" data-page-node-id="Y8CXLKEuKLtAH5iMY1dhlL">
+        <span data-page-node-id="iasmMDNpuzlXMnCSR7tsEt"><i style="background:var(--blue-2)" data-page-node-id="SPHP8Wb9yAcDO7AgCTiCcF"></i>本期营收</span>
+        <span data-page-node-id="q03TDDd7QtY6u00tcuDvuY"><i style="background:#D6E4F5" data-page-node-id="hV3t20gCNT1Rt4dcs8Zgrn"></i>去年同期</span>
+        <span data-page-node-id="yVvmqscxUOw4joYCOTz5oD"><i style="background:var(--amber)" data-page-node-id="cCk5LALtWYDl768L4epaLA"></i>毛利率</span>
+      </div>
+      <div id="trend" data-page-node-id="FdvyWEioGMYWwEqUiwM7j8"></div>
+    </div>
+    <div class="card" data-page-node-id="Al1g5MzVPFNYFLkxCWRGLS">
+      <h2 data-page-node-id="nlOgOi7aUPWyeRNICRT5eN">收入结构 <span class="tag" data-page-node-id="e7AqTeWoBuG2EJPdeLXGVn">按产品线</span></h2>
+      <div class="cs" data-page-node-id="GZox2dLqLN7WHWTbkGzrqA">看哪条线在养公司、哪条线在消耗资源</div>
+      <div id="donut" data-page-node-id="2Ba6Eti07dotL1f5VOGn8Q"></div>
+    </div>
+  </div>
+
+  <div class="grid2" data-page-node-id="AXdDMa2dEJzMzbVaFKpo4A">
+    <div class="card" data-page-node-id="PdlMQWSDXu9rORLR210NV1">
+      <h2 data-page-node-id="xU9CiVXuGAUsVmi7EBLGS4">客户 / 区域贡献 <span class="tag" data-page-node-id="yN2nWC2euTMItomCFALyJA">Top 8</span></h2>
+      <div class="cs" data-page-node-id="FLcaBOwh3mStLYqTRSzWUm">前 3 名客户贡献 <b id="top3pct" data-page-node-id="495sMVohdsKRXACHK4IpC0">—</b>，单一客户占比 <b id="top1pct" data-page-node-id="64Q3iUsmnW19s3hqqTEOEJ">—</b></div>
+      <div id="bars" data-page-node-id="kkM2RYXiscXmZvCKC39VJ1"></div>
+    </div>
+    <div class="card" data-page-node-id="TJmWDb0E7z2yfcBxj7uqlr">
+      <h2 data-page-node-id="Dh33Y2JFMUFRP7pFvRBVJG">商机漏斗与风险预警 <span class="tag" data-page-node-id="VpXYjwyIkoVhgVlDAcQoPI">在途 15 个</span></h2>
+      <div class="cs" data-page-node-id="xvZ2jYzqn762ydwUmnGdSJ">概率加权预测：<b id="wsum" data-page-node-id="4Cunh506Nh8h3QHdbd3Oj7">—</b>　停留超 40 天的商机自动进入预警</div>
+      <div class="fnl" id="funnel" data-page-node-id="fgmBYVnIEcSlFlXMx9LRFP"></div>
+      <table style="margin-top:10px" data-page-node-id="pjhmKkG6ClC6rvc1Q1ONgd">
+        <thead data-page-node-id="0uz5MrnCELMVLj8DMHLHrX"><tr data-page-node-id="ATBct8OtlVLMiNHYeMG1r6"><th data-page-node-id="iZ2R8smvd7YX682sQJHQqh">商机</th><th data-page-node-id="GtEPHdJNPExPBdHNp8ywAs">客户</th><th style="text-align:right" data-page-node-id="X5SdiVp9G5ABMjK3XknHVF">金额(万)</th><th data-page-node-id="8Vd3yj0VeMRfTl9T4nn9sK">停留</th><th data-page-node-id="Zpd63YDRWa8WFRzdLJkDQE">判定</th></tr></thead>
+        <tbody id="alerts" data-page-node-id="KtQAdCr8iuRfY4smPVoXFQ"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:12px" data-page-node-id="hz7GnUIUhJ9cYiMtdrVwFm">
+    <h2 data-page-node-id="kguAX0O9O1NeFnhw8Nio2F">口径说明 <span class="tag" data-page-node-id="82zki8MUEgnJ8tuvAc47gs">先统一口径，再看数</span></h2>
+    <table data-page-node-id="PYyIsgHF9xqZ5TgLJcLu9Z">
+      <thead data-page-node-id="8UItZZBMRHK6EpDahtvMk2"><tr data-page-node-id="KfU68TACbtniIsdX5xbZIM"><th style="width:120px" data-page-node-id="gYFDbojsvHiGy0UbewAcKl">指标</th><th data-page-node-id="TMcMo0Jsu2nzDUrI1z5rfi">口径定义</th><th style="width:130px" data-page-node-id="kmB0XCNKWxaIKuNFeBhui1">数据源</th><th style="width:90px" data-page-node-id="sUHpzpAv2oG0bd6JSyj42l">归口</th></tr></thead>
+      <tbody data-page-node-id="lKoOeActdUANBFBOFDh721">
+        <tr data-page-node-id="dgE2RLuNEmGpB6Xf8K5aMm"><td data-page-node-id="EiNm6a5FIJDA1ytciwPmtY"><b data-page-node-id="4GUizM69sDIjsmE9fgjeC8">营收</b></td><td data-page-node-id="Y74xhKYREluQ4ZFzltHs4O">按<b data-page-node-id="KTi2ghQ3Z0WWSZ5I3q4oCZ">签约口径</b>统计，含税；不含未签约商机</td><td data-page-node-id="xllcPOMSDTVQZW6zMyKzAR">CRM 合同表</td><td data-page-node-id="ICKe3jSRPc0ZapwyPrtVEB">销售运营</td></tr>
+        <tr data-page-node-id="jM9qb6MWH024G0hKUjbiJi"><td data-page-node-id="1jsxDuq45SmnkAJhSVR6Gp"><b data-page-node-id="pdhZt7DaYit8zc2uI27kov">回款</b></td><td data-page-node-id="mnBLcK8BGi7K8X4D82bdOK">银行到账口径，以到账日为准（非开票日）</td><td data-page-node-id="nOvHausDjLxwXlBVVffkEk">ERP 收款单</td><td data-page-node-id="FA9bnyF58MdfcL5IMYJ9JD">财务</td></tr>
+        <tr data-page-node-id="fM6jqy8fkWNuaaWQUD9s4Q"><td data-page-node-id="wHEA1EU4pQgEwb1vM3uU3o"><b data-page-node-id="B2wrsAAPkqF7j3bApa1zKq">毛利率</b></td><td data-page-node-id="rbWAyPEwPUUYA6mI4C1awV">（合同额 − 直接成本 − 分摊费用）÷ 合同额；底线 25%</td><td data-page-node-id="zF4c1iODqCM2M6JVniBWpv">项目成本表</td><td data-page-node-id="4RCWYavivk0WyQ9JNeQJzl">财务+业务</td></tr>
+        <tr data-page-node-id="onFx15v2CGO8maTMO01rJA"><td data-page-node-id="oqMWfVs9ovL4NBsBRAHXxM"><b data-page-node-id="JwFamejCya62eGzHdE7Kor">DSO</b></td><td data-page-node-id="29z2USJQtpozYlZM4VqAvb">应收账款余额 ÷ 期间营收 × 天数</td><td data-page-node-id="scB6HeYPqLVQrm0ErbmN1f">ERP 应收账龄</td><td data-page-node-id="uEIuBsd0Tsge8BANkv2kxm">财务</td></tr>
+        <tr data-page-node-id="hFlwSy7SzuSg6zc9fWESNP"><td data-page-node-id="cJnJ7f4yadZ6iJ8jXOvaMv"><b data-page-node-id="zb6GIxXTAIHEjFsQRVmYbB">加权预测</b></td><td data-page-node-id="eF2xmjH4NwGzTxdmJcD9fT">Σ（商机金额 × 阶段中标概率）</td><td data-page-node-id="9Bx2RWMVQNyGzI5nCbYrFK">CRM 商机表</td><td data-page-node-id="hqHkvrDcb6IUQ7kv32HDjF">销售运营</td></tr>
+      </tbody>
+    </table>
+    <div class="note" data-page-node-id="RGCrmeUljkCHiHpHSKS3Aj">
+      <b data-page-node-id="XfXmNKZ9PDNkZ2LGpHjwVc">看板设计说明：</b>本看板为课程演示用样张，数据源为随机生成的脱敏样例，用于展示「经营五表」在 BI 中的落地形态。
+      实际交付时按企业真实数据源（Excel / ERP / CRM / 金蝶用友）接入，口径以上表为准。
+    </div>
+  </div>
+
+  <div class="ft" data-page-node-id="MlQTI1ZYJEfnuG6MYtQzrY">
+    王宏杰 ｜ 19 年 LED 光电与能源电力行业 · 9 年经营分析 · 利兹大学 MBA ｜ 演示样例 · 数据均为虚构<br data-page-node-id="yHDAmfYdFc6SuYUYmmREb5">
+    ⚠️ 本页所有客户、区域、项目、金额均为脱敏虚构，不涉及任何真实商业信息
+  </div>
+</div>
+
+<script>
+/* ============ 脱敏演示数据（全部虚构） ============ */
+var MONTHS = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
+
+var DATA = {
+  all: {
+    cur:  [142,118,165,131,148,172,139,156,181,152,149,195],
+    prev: [121,104,138,119,126,141,124,132,148,131,127,162],
+    gm:   [26.8,24.1,29.4,27.2,28.6,30.1,26.2,28.1,31.2,27.8,26.9,29.8],
+    rev: 1265, recv: 1063, gmrate: 27.4, cash: 6.2, dso: 68, opps: 15,
+    revYoy: 0.184, recvYoy: 0.121, gmDelta: 1.6, dsoDelta: -7
+  },
+  '华东': {
+    cur:  [46,38,53,42,48,55,44,50,58,49,47,62],
+    prev: [39,33,44,38,40,45,40,42,47,42,40,52],
+    gm:   [29.1,26.4,31.2,29.0,30.4,31.8,28.4,30.1,32.6,29.6,28.8,31.1],
+    rev: 426, recv: 382, gmrate: 29.8, cash: 6.2, dso: 58, opps: 5,
+    revYoy: 0.212, recvYoy: 0.164, gmDelta: 2.1, dsoDelta: -9
+  },
+  '华南': {
+    cur:  [34,28,41,33,37,43,35,39,45,38,37,49],
+    prev: [30,26,35,30,32,36,31,34,38,33,32,41],
+    gm:   [25.1,22.4,27.2,25.0,26.4,27.9,24.3,26.0,28.6,25.6,24.9,27.1],
+    rev: 315, recv: 264, gmrate: 25.9, cash: 6.2, dso: 72, opps: 4,
+    revYoy: 0.148, recvYoy: 0.062, gmDelta: 0.4, dsoDelta: 4
+  },
+  '华北': {
+    cur:  [26,21,31,25,28,33,26,30,34,29,28,37],
+    prev: [22,19,26,23,24,27,24,26,29,25,24,30],
+    gm:   [27.8,25.1,30.2,28.0,29.4,30.9,27.3,29.0,31.6,28.6,27.9,30.2],
+    rev: 238, recv: 218, gmrate: 28.7, cash: 6.2, dso: 46, opps: 3,
+    revYoy: 0.232, recvYoy: 0.201, gmDelta: 2.4, dsoDelta: -12
+  },
+  '西南': {
+    cur:  [15,13,19,15,17,20,16,18,21,18,17,24],
+    prev: [13,11,16,14,15,17,14,15,17,15,14,19],
+    gm:   [22.1,19.4,24.2,22.0,23.4,24.9,21.3,23.0,25.6,22.6,21.9,24.1],
+    rev: 142, recv: 118, gmrate: 22.9, cash: 6.2, dso: 83, opps: 2,
+    revYoy: 0.286, recvYoy: 0.094, gmDelta: -1.8, dsoDelta: 11
+  },
+  '西北': {
+    cur:  [9,8,12,9,10,12,10,11,13,11,10,15],
+    prev: [8,7,10,8,9,10,9,9,11,9,9,12],
+    gm:   [19.1,16.4,21.2,19.0,20.4,21.9,18.3,20.0,22.6,19.6,18.9,21.1],
+    rev: 86, recv: 69, gmrate: 20.4, cash: 6.2, dso: 95, opps: 1,
+    revYoy: 0.168, recvYoy: 0.041, gmDelta: -3.2, dsoDelta: 16
+  }
+};
+
+var PRODUCTS = [
+  {name:'显示系统 P1', v:582, color:'#1E5FA8', gm:31.2},
+  {name:'照明工程 P2', v:398, color:'#4A90D9', gm:24.8},
+  {name:'能源服务 P3', v:285, color:'#A8CCEE', gm:19.6}
+];
+
+var CUSTOMERS = [
+  {name:'客户 A', v:286}, {name:'客户 B', v:214}, {name:'客户 C', v:168},
+  {name:'客户 D', v:125}, {name:'客户 E', v:98},  {name:'客户 F', v:76},
+  {name:'客户 G', v:62},  {name:'客户 H', v:48}
+];
+
+var STAGES = [
+  {name:'初步接触', n:4, amt:135, p:0.15, color:'#A8CCEE'},
+  {name:'方案确认', n:3, amt:196, p:0.35, color:'#7FB3E3'},
+  {name:'报价',     n:4, amt:296, p:0.50, color:'#4A90D9'},
+  {name:'商务谈判', n:2, amt:266, p:0.80, color:'#2E74BE'},
+  {name:'中标待签', n:2, amt:61,  p:0.95, color:'#1E5FA8'}
+];
+
+var ALERTS = [
+  {id:'OPP-003', c:'客户 C', amt:98, days:55, lv:'r', txt:'高风险'},
+  {id:'OPP-008', c:'客户 H', amt:49, days:47, lv:'r', txt:'高风险'},
+  {id:'OPP-005', c:'客户 E', amt:72, days:31, lv:'a', txt:'需推进'},
+  {id:'OPP-002', c:'客户 B', amt:124, days:18, lv:'g', txt:'正常'}
+];
+
+/* ============ 工具 ============ */
+function fmt(n, d){ return (n||0).toFixed(d===undefined?0:d).replace(/\B(?=(\d{3})+(?!\d))/g, ','); }
+function money(n){ return fmt(n); }
+function pct(n, d){ return (n*100).toFixed(d===undefined?1:d) + '%'; }
+function esc(s){ return String(s); }
+function niceMax(v){
+  if(v<=0) return 10;
+  var p = Math.pow(10, Math.floor(Math.log(v)/Math.LN10));
+  var n = v/p;
+  var m = n<=1?1: n<=1.5?1.5: n<=2?2: n<=2.5?2.5: n<=3?3: n<=4?4: n<=5?5: n<=7.5?7.5: 10;
+  return m*p;
+}
+function svg(w,h,inner,cls){
+  return '<svg viewBox="0 0 '+w+' '+h+'" width="100%" height="'+h+'" '+
+         'preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">'+
+         '<g font-family="Microsoft YaHei, PingFang SC, sans-serif">'+inner+'</g></svg>';
+}
+
+/* ============ KPI ============ */
+function renderKPI(d){
+  var items = [
+    {c:'k1', lb:'营收 YTD（万元）', vl:money(d.rev), dt:'同比 <span class="'+(d.revYoy>=0?'up':'down')+'">'+(d.revYoy>=0?'▲':'▼')+' '+pct(Math.abs(d.revYoy))+'</span>'},
+    {c:'k2', lb:'回款 YTD（万元）', vl:money(d.recv), dt:'同比 <span class="'+(d.recvYoy>=0?'up':'down')+'">'+(d.recvYoy>=0?'▲':'▼')+' '+pct(Math.abs(d.recvYoy))+'</span>'},
+    {c:'k3', lb:'加权毛利率', vl:pct(d.gmrate/100), dt:'较去年 <span class="'+(d.gmDelta>=0?'up':'down')+'">'+(d.gmDelta>=0?'+':'')+d.gmDelta.toFixed(1)+' pct</span>'},
+    {c:'k4', lb:'在途商机（个）', vl:d.opps, dt:'加权预测 <b>'+money(Math.round(d.rev*0.72))+'</b> 万元'},
+    {c:'k5', lb:'现金可支撑（月）', vl:d.cash.toFixed(1), dt:d.cash>=6?'<span class="up">安全区间</span>':'<span class="down">需关注</span>'},
+    {c:'k6', lb:'回款周期 DSO（天）', vl:d.dso, dt:'较去年 <span class="'+(d.dsoDelta>0?'down':'up')+'">'+(d.dsoDelta>0?'+':'')+d.dsoDelta+' 天</span>'}
+  ];
+  document.getElementById('kpis').innerHTML = items.map(function(k){
+    return '<div class="kpi '+k.c+'"><div class="lb">'+k.lb+'</div>'+
+           '<div class="vl">'+k.vl+'</div><div class="dt">'+k.dt+'</div></div>';
+  }).join('');
+}
+
+/* ============ 趋势图（柱 + 折线） ============ */
+function renderTrend(d){
+  var W=700,H=248,pl=42,pr=42,pt=14,pb=28;
+  var pw=W-pl-pr, ph=H-pt-pb;
+  var maxV=niceMax(Math.max.apply(null, d.cur.concat(d.prev)));
+  var maxG=niceMax(Math.max.apply(null, d.gm)*1.15);
+  var bg=pw/12, bw=bg*0.30;
+  var s='';
+
+  // grid + left axis
+  for(var i=0;i<=4;i++){
+    var y=pt+ph-ph*i/4;
+    s+='<line x1="'+pl+'" y1="'+y+'" x2="'+(pl+pw)+'" y2="'+y+'" stroke="#EEF2F8" stroke-width="1"/>';
+    s+='<text x="'+(pl-7)+'" y="'+(y+4)+'" font-size="10" fill="#8A94A6" text-anchor="end">'+Math.round(maxV*i/4)+'</text>';
+    s+='<text x="'+(pl+pw+7)+'" y="'+(y+4)+'" font-size="10" fill="#C9821F" text-anchor="start">'+(maxG*i/4).toFixed(0)+'%</text>';
+  }
+  // bars + month labels
+  for(var m=0;m<12;m++){
+    var x0=pl+bg*m;
+    var h1=ph*d.prev[m]/maxV, h2=ph*d.cur[m]/maxV;
+    s+='<rect x="'+(x0+bg*0.12)+'" y="'+(pt+ph-h1)+'" width="'+bw+'" height="'+h1+'" fill="#D6E4F5" rx="1"/>';
+    s+='<rect x="'+(x0+bg*0.12+bw+2)+'" y="'+(pt+ph-h2)+'" width="'+bw+'" height="'+h2+'" fill="#4A90D9" rx="1"/>';
+    s+='<text x="'+(x0+bg*0.5)+'" y="'+(H-9)+'" font-size="10" fill="#8A94A6" text-anchor="middle">'+MONTHS[m]+'</text>';
+  }
+  // line (毛利率, right axis)
+  var pts=[];
+  for(var k=0;k<12;k++){
+    pts.push([pl+bg*k+bg*0.5, pt+ph-ph*d.gm[k]/maxG]);
+  }
+  s+='<polyline points="'+pts.map(function(p){return p[0].toFixed(1)+','+p[1].toFixed(1);}).join(' ')+'" '+
+     'fill="none" stroke="#C9821F" stroke-width="2" stroke-linejoin="round"/>';
+  pts.forEach(function(p){
+    s+='<circle cx="'+p[0].toFixed(1)+'" cy="'+p[1].toFixed(1)+'" r="2.6" fill="#fff" stroke="#C9821F" stroke-width="1.6"/>';
+  });
+  // 底线 25%
+  var yb=pt+ph-ph*25/maxG;
+  s+='<line x1="'+pl+'" y1="'+yb+'" x2="'+(pl+pw)+'" y2="'+yb+'" stroke="#C0392B" stroke-width="1" stroke-dasharray="4 3"/>';
+  s+='<text x="'+(pl+pw-4)+'" y="'+(yb-5)+'" font-size="9.5" fill="#C0392B" text-anchor="end">毛利率底线 25%</text>';
+  s+='<line x1="'+pl+'" y1="'+(pt+ph)+'" x2="'+(pl+pw)+'" y2="'+(pt+ph)+'" stroke="#D8E0EC" stroke-width="1"/>';
+  document.getElementById('trend').innerHTML = svg(W,H,s);
+}
+
+/* ============ 环形图 ============ */
+function renderDonut(){
+  var W=300,H=232,cx=112,cy=112,r=76,tk=26;
+  var total=PRODUCTS.reduce(function(a,b){return a+b.v;},0);
+  var s='',off=0,C=2*Math.PI*r;
+  PRODUCTS.forEach(function(p){
+    var frac=p.v/total, len=C*frac;
+    s+='<circle cx="'+cx+'" cy="'+cy+'" r="'+r+'" fill="none" stroke="'+p.color+'" stroke-width="'+tk+'" '+
+       'stroke-dasharray="'+(len-2).toFixed(2)+' '+(C-len+2).toFixed(2)+'" '+
+       'stroke-dashoffset="'+(-off).toFixed(2)+'" transform="rotate(-90 '+cx+' '+cy+')"/>';
+    off+=len;
+  });
+  s+='<text x="'+cx+'" y="'+(cy-4)+'" font-size="19" font-weight="700" fill="#1F2937" text-anchor="middle">'+money(total)+'</text>';
+  s+='<text x="'+cx+'" y="'+(cy+14)+'" font-size="10.5" fill="#8A94A6" text-anchor="middle">营收合计（万元）</text>';
+  var ly=52;
+  PRODUCTS.forEach(function(p,i){
+    var y=ly+i*34;
+    s+='<rect x="212" y="'+(y-8)+'" width="10" height="10" rx="2" fill="'+p.color+'"/>';
+    s+='<text x="228" y="'+(y+1)+'" font-size="11.5" fill="#1F2937">'+p.name+'</text>';
+    s+='<text x="228" y="'+(y+16)+'" font-size="10.5" fill="#8A94A6">'+pct(p.v/total)+' ｜ 毛利率 '+p.gm.toFixed(1)+'%</text>';
+  });
+  document.getElementById('donut').innerHTML = svg(W,H,s);
+}
+
+/* ============ 横向条形 ============ */
+function renderBars(){
+  var max=CUSTOMERS[0].v;
+  var sum8=CUSTOMERS.reduce(function(a,b){return a+b.v;},0);
+  var top3=CUSTOMERS[0].v+CUSTOMERS[1].v+CUSTOMERS[2].v;
+  document.getElementById('top3pct').textContent = pct(top3/sum8);
+  document.getElementById('top1pct').textContent = pct(CUSTOMERS[0].v/sum8);
+  var h=CUSTOMERS.map(function(c,i){
+    var w=Math.round(c.v/max*100);
+    var col=i<3?'#1E5FA8': i<6?'#4A90D9':'#A8CCEE';
+    return '<div class="brow"><div>'+c.name+'</div>'+
+           '<div class="btrk"><div class="bfil" style="width:'+w+'%;background:'+col+'"></div></div>'+
+           '<div class="bval">'+money(c.v)+' 万</div></div>';
+  }).join('');
+  document.getElementById('bars').innerHTML = h +
+    '<div class="note" style="margin-top:4px">Top 8 客户合计 <b>'+money(sum8)+' 万</b>（占营收 '+pct(sum8/1265)+'），'+
+    '其中前 3 名贡献 <b>'+pct(top3/sum8)+'</b>。客户 A 单家占比 <b>'+pct(CUSTOMERS[0].v/1265)+'</b>，'+
+    '未超 40% 危险线，但已须绑定多联系人、做流失预案。</div>';
+}
+
+/* ============ 漏斗 ============ */
+function renderFunnel(){
+  var maxAmt=STAGES[0].amt;
+  STAGES.forEach(function(s){ if(s.amt>maxAmt) maxAmt=s.amt; });
+  var h=STAGES.map(function(s){
+    var w=Math.round(s.amt/maxAmt*100);
+    return '<div class="frow"><div style="width:62px;font-size:11.5px;color:#5A6779">'+s.name+'</div>'+
+      '<div style="flex:1"><div class="fbar" style="width:'+w+'%;background:'+s.color+'">'+
+      money(s.amt)+' 万 × '+s.n+' 个</div></div>'+
+      '<div style="width:56px;text-align:right;font-size:11.5px;color:#8A94A6">'+Math.round(s.p*100)+'%</div></div>';
+  }).join('');
+  var wsum=STAGES.reduce(function(a,b){return a+b.amt*b.p;},0);
+  document.getElementById('wsum').innerHTML = money(Math.round(wsum))+' 万元';
+  document.getElementById('funnel').innerHTML = h;
+  document.getElementById('alerts').innerHTML = ALERTS.map(function(a){
+    return '<tr><td><b>'+a.id+'</b></td><td>'+a.c+'</td>'+
+           '<td class="num">'+a.amt+'</td><td class="num">'+a.days+' 天</td>'+
+           '<td><span class="pill '+a.lv+'">'+a.txt+'</span></td></tr>';
+  }).join('');
+}
+
+/* ============ 主渲染 ============ */
+function renderAll(key){
+  var d=DATA[key]||DATA.all;
+  renderKPI(d); renderTrend(d); renderDonut(); renderBars(); renderFunnel();
+}
+document.getElementById('regionSel').addEventListener('change', function(e){
+  renderAll(e.target.value);
+});
+renderAll('all');
+</script>
+</body>
+</html>
