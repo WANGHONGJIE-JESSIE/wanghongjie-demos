@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>营收异动归因分析 Demo · 王宏杰</title>
+<style>
+  :root{
+    --ink:#1a1d21; --ink-2:#3d434b; --ink-3:#666e78;
+    --line:#dfe3e8; --accent:#1f4e79; --accent-soft:#eaf1f8;
+    --bg:#fff; --tag:#f2f5f8; --ok:#1a7f4e; --warn:#b35900; --bad:#c0392b; --teal:#0e7a8a;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:"PingFang SC","Microsoft YaHei","Segoe UI",sans-serif;color:var(--ink);background:#eceff2;line-height:1.65;padding:24px 12px;}
+  .wrap{max-width:960px;margin:0 auto;background:var(--bg);padding:34px 38px 30px;box-shadow:0 2px 18px rgba(20,30,45,.10);}
+  .crumb{font-size:11.5px;color:var(--ink-3);margin-bottom:10px;}
+  .crumb a{color:var(--accent);text-decoration:none;}
+  h1{font-size:21px;color:var(--ink);}
+  .sub{font-size:12.5px;color:var(--ink-3);margin-top:4px;}
+  .badges{margin:10px 0 4px;display:flex;flex-wrap:wrap;gap:6px;}
+  .badge{font-size:10.8px;padding:2px 8px;border-radius:10px;background:var(--accent-soft);color:var(--accent);border:1px solid #cfe0ee;font-weight:600;}
+  .badge.gray{background:var(--tag);color:var(--ink-3);border-color:var(--line);}
+  hr{border:none;border-top:1px solid var(--line);margin:16px 0;}
+
+  /* step nav */
+  .steps-nav{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px;}
+  .snav{font-size:12.3px;font-weight:600;padding:7px 13px;border-radius:6px;border:1px solid var(--line);
+        background:var(--tag);color:var(--ink-2);cursor:pointer;}
+  .snav:hover{border-color:var(--accent);color:var(--accent);}
+  .snav.on{background:var(--accent);color:#fff;border-color:var(--accent);}
+  .panel{display:none;}
+  .panel.on{display:block;}
+
+  /* kpi */
+  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px;}
+  .kpi{border:1px solid var(--line);border-radius:7px;padding:10px 12px;background:#fbfcfd;}
+  .kpi .t{font-size:11px;color:var(--ink-3);}
+  .kpi .v{font-size:19px;font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums;margin-top:2px;}
+  .kpi .d{font-size:11px;margin-top:2px;}
+  .up{color:var(--bad);} .dn{color:var(--bad);} .good{color:var(--ok);}
+  .verdict{border-radius:6px;padding:10px 14px;font-size:12.6px;margin-bottom:14px;border-left:3px solid var(--accent);background:var(--accent-soft);color:#12395c;line-height:1.8;}
+  .verdict b{color:#0d2b48;}
+
+  h3{font-size:14px;color:var(--ink);margin:14px 0 8px;}
+  .hint{font-size:11.8px;color:var(--ink-3);margin-bottom:10px;}
+  svg text{font-family:"PingFang SC","Microsoft YaHei",sans-serif;}
+
+  /* region bars */
+  table{border-collapse:collapse;width:100%;font-size:12.3px;margin-bottom:12px;}
+  th{background:var(--accent);color:#fff;font-weight:600;padding:6px 10px;text-align:left;white-space:nowrap;}
+  td{padding:6px 10px;border-bottom:1px solid var(--line);color:var(--ink-2);}
+  tr:nth-child(even) td{background:#f7f9fb;}
+  td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;}
+  .regrow{cursor:pointer;}
+  .regrow:hover td{background:#eef4fa;}
+  .regrow.sel td{background:var(--accent-soft);}
+  .chip{display:inline-block;font-size:11px;font-weight:700;border-radius:10px;padding:1px 9px;}
+  .chip.bad{background:#fdf0ee;color:var(--bad);}
+  .chip.good{background:#e9f6ef;color:var(--ok);}
+  .bar2{display:flex;align-items:center;gap:6px;font-size:11.3px;color:var(--ink-3);white-space:nowrap;}
+  .b1,.b2{height:11px;border-radius:2px;display:inline-block;}
+  .b1{background:#c6d3e0;} .b2{background:var(--accent);}
+  .delta{font-weight:700;font-variant-numeric:tabular-nums;}
+
+  /* root cause cards */
+  .duo{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;}
+  .cause{border:1px solid #ecd5d1;border-left:3px solid var(--bad);border-radius:7px;padding:12px 14px;background:#fdf8f7;font-size:12.4px;color:var(--ink-2);line-height:1.85;}
+  .cause b{color:var(--ink);}
+  .cause .num{color:var(--bad);font-weight:700;font-variant-numeric:tabular-nums;}
+  .hypo{border:1px solid var(--line);border-radius:7px;padding:11px 14px;margin-bottom:8px;font-size:12.4px;background:#fbfcfd;line-height:1.85;}
+  .hypo b{color:var(--ink);}
+  .tagv{font-size:11px;font-weight:700;border-radius:10px;padding:1px 9px;float:right;}
+  .tagv.excl{background:#e9f6ef;color:var(--ok);}
+  .tagv.conf{background:#fdf0ee;color:var(--bad);}
+
+  /* actions */
+  .concl{background:linear-gradient(180deg,#f3f8fd,#eef4fb);border:1px solid #d3e2f2;border-radius:8px;padding:14px 18px;font-size:12.8px;line-height:2.0;color:#22384f;margin-bottom:14px;}
+  .concl b{color:#0d2b48;}
+
+  .redlines{margin-top:18px;background:#fdf6ec;border:1px solid #ecd9b0;border-radius:6px;padding:10px 14px;font-size:12px;color:#6b5312;line-height:1.9;}
+  .redlines b{color:#8a6a1a;}
+  .method{margin-top:10px;background:#eef3fa;border:1px solid #cfdff0;border-radius:6px;padding:10px 14px;font-size:12px;color:#22384f;line-height:1.9;}
+  .method b{color:#0d2b48;}
+  .note{font-size:11.8px;color:var(--ink-3);border-top:1px dashed var(--line);padding-top:10px;margin-top:14px;}
+  @media (max-width:720px){.kpis{grid-template-columns:1fr 1fr;}.duo{grid-template-columns:1fr;}.wrap{padding:22px 16px;}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="crumb">◄ <a href="./index.html">返回作品集首页</a></div>
+  <h1>营收异动归因分析 Demo</h1>
+  <div class="sub">本季营收环比下滑 15.1%，一条链路挖到根因：量价拆解 → 区域下钻 → 客户定位 → 假设检验 → 行动建议。数据为虚构示例，本地运行。</div>
+  <div class="badges">
+    <span class="badge">量价拆解</span>
+    <span class="badge">多维下钻</span>
+    <span class="badge">假设检验</span>
+    <span class="badge">行动建议</span>
+    <span class="badge gray">瀑布图 · 可点击下钻</span>
+    <span class="badge gray">示例数据为虚构</span>
+  </div>
+  <hr>
+
+  <div class="steps-nav" id="nav">
+    <div class="snav on" data-p="p1">① 异动确认</div>
+    <div class="snav" data-p="p2">② 量价拆解</div>
+    <div class="snav" data-p="p3">③ 区域下钻</div>
+    <div class="snav" data-p="p4">④ 根因与假设检验</div>
+    <div class="snav" data-p="p5">⑤ 结论与行动</div>
+  </div>
+
+  <!-- ============ P1 异动确认 ============ -->
+  <div class="panel on" id="p1">
+    <div class="kpis">
+      <div class="kpi"><div class="t">上季签约营收（Q1）</div><div class="v">301.0 万</div><div class="d" style="color:var(--ink-3)">14 单 · 均单 21.5 万</div></div>
+      <div class="kpi"><div class="t">本季签约营收（Q2）</div><div class="v">264.0 万</div><div class="d" style="color:var(--ink-3)">12 单 · 均单 22.0 万</div></div>
+      <div class="kpi"><div class="t">环比变动</div><div class="v dn">−37.0 万</div><div class="d dn">−12.3%</div></div>
+      <div class="kpi"><div class="t">预警阈值</div><div class="v">±10%</div><div class="d dn">已触发 · 启动归因</div></div>
+    </div>
+    <div class="verdict">
+      <b>结论 ①：</b>营收下滑 12.3%，超过 ±10% 的经营预警阈值，<b>不是正常波动，启动归因分析</b>。口径说明：此处为<b>签约口径</b>（合同签订额），非回款口径——归因前先锁定口径，避免三个部门三个答案。
+    </div>
+    <h3>分析方法</h3>
+    <div class="hint">先确认"是不是真异动"（对比阈值），再问"差在哪"（拆解），最后问"为什么差"（根因）。顺序不能反——多数人一上来就猜原因。</div>
+  </div>
+
+  <!-- ============ P2 量价拆解 ============ -->
+  <div class="panel" id="p2">
+    <div class="verdict">
+      <b>结论 ②：</b>营收 = 订单量 × 均单额。量效应 <b class="delta" style="color:var(--bad)">−43.0 万</b>，价效应 <b class="delta" style="color:var(--ok)">+6.0 万</b>。
+      下滑<b>全部来自"量"</b>，而价效应为正（均单还在涨 2.3%）——直接排除降价 / 价格战因素，下一步查"谁的单没了"。
+    </div>
+    <h3>量价拆解瀑布图</h3>
+    <svg viewBox="0 0 680 300" style="width:100%;max-width:680px;display:block;margin:0 auto 8px;">
+      <!-- axis -->
+      <line x1="40" y1="250" x2="640" y2="250" stroke="#c6d3e0" stroke-width="1"/>
+      <!-- Q1 full bar: 301 = 200px，scale 1.505 万/px -->
+      <rect x="70" y="50" width="100" height="200" fill="#1f4e79" rx="2"/>
+      <text x="120" y="42" text-anchor="middle" font-size="13" font-weight="700" fill="#1a1d21">301.0 万</text>
+      <text x="120" y="268" text-anchor="middle" font-size="12" fill="#666e78">上季 Q1</text>
+      <!-- 量效应 bar: 301 -> 258（−43.0） -->
+      <rect x="215" y="50" width="100" height="28.6" fill="#c0392b" rx="2"/>
+      <text x="265" y="42" text-anchor="middle" font-size="13" font-weight="700" fill="#c0392b">−43.0 万</text>
+      <text x="265" y="268" text-anchor="middle" font-size="12" fill="#666e78">量效应（−2 单）</text>
+      <text x="265" y="284" text-anchor="middle" font-size="10.5" fill="#8a94a6">14 → 12 单</text>
+      <!-- 价效应 bar: 258 -> 264（+6.0） -->
+      <rect x="360" y="74.6" width="100" height="4.0" fill="#1a7f4e" rx="1"/>
+      <text x="410" y="72" text-anchor="middle" font-size="13" font-weight="700" fill="#1a7f4e">+6.0 万</text>
+      <text x="410" y="268" text-anchor="middle" font-size="12" fill="#666e78">价效应（均单 +2.3%）</text>
+      <text x="410" y="284" text-anchor="middle" font-size="10.5" fill="#8a94a6">21.5 → 22.0 万</text>
+      <!-- Q2 full bar: 264 -->
+      <rect x="505" y="74.6" width="100" height="175.4" fill="#1f4e79" rx="2" opacity="0.82"/>
+      <text x="555" y="72" text-anchor="middle" font-size="13" font-weight="700" fill="#1a1d21">264.0 万</text>
+      <text x="555" y="268" text-anchor="middle" font-size="12" fill="#666e78">本季 Q2</text>
+      <!-- connectors -->
+      <line x1="170" y1="50" x2="215" y2="50" stroke="#8a94a6" stroke-dasharray="4 3" stroke-width="1"/>
+      <line x1="315" y1="78.6" x2="360" y2="78.6" stroke="#8a94a6" stroke-dasharray="4 3" stroke-width="1"/>
+      <line x1="460" y1="74.6" x2="505" y2="74.6" stroke="#8a94a6" stroke-dasharray="4 3" stroke-width="1"/>
+    </svg>
+    <div class="hint">拆解公式：Δ营收 = Δ量 × 基期均价 + Δ价 × 本期单量 =（−2 × 21.5）+（0.5 × 12）= −43.0 + 6.0 = −37.0 万。价效应柱几乎看不见，这正是关键信息。</div>
+  </div>
+
+  <!-- ============ P3 区域下钻 ============ -->
+  <div class="panel" id="p3">
+    <div class="verdict">
+      <b>结论 ③：</b>五大区域中<b>华东（−45 万）与华南（−10 万）为负异动</b>，华北 +8、西南 +9、西北 +1，其余三区合计 +18 万。
+      负异动集中在两个区域 → 继续向客户层下钻（点击行可查看该区域客户明细）。
+    </div>
+    <h3>区域拆解（签约口径 · 万元）</h3>
+    <table>
+      <thead><tr>
+        <th>区域</th><th class="num">Q1</th><th class="num">Q2</th><th class="num">Δ</th><th>对比（灰 = Q1，蓝 = Q2）</th>
+      </tr></thead>
+      <tbody id="regBody"></tbody>
+    </table>
+    <div id="regDetail"></div>
+  </div>
+
+  <!-- ============ P4 根因与假设检验 ============ -->
+  <div class="panel" id="p4">
+    <div class="verdict">
+      <b>结论 ④：</b>华东客户 A（预算冻结）<b>−51 万</b>、华南客户 B（招标延期）<b>−10 万</b>，两个大客户合计 <b>−61 万</b>；
+      剔除这两家后，<b>其余客户合计 178 → 202 万（+24 万，+13.5%）</b>——业务基本盘在增长，问题是头部客户集中度爆发。
+    </div>
+    <div class="duo">
+      <div class="cause">
+        <b>客户 A（S 级 · 华东）</b>　<span class="num">71 → 20 万（−51）</span><br>
+        根因：二期扩建项目因<b>集团年度预算冻结推迟</b>（公开信息可查），一期维保合同正常履约。属<b>外部预算周期风险</b>，非输单、非客情问题。
+      </div>
+      <div class="cause">
+        <b>客户 B（A 级 · 华南）</b>　<span class="num">52 → 42 万（−10）</span><br>
+        根因：招标计划由 6 月<b>延期至下季度</b>（招标网公告可核），商机仍在池内、阶段未降级。属<b>采购窗口期风险</b>，需求未消失。
+      </div>
+    </div>
+    <h3>假设检验（3 个备择解释，逐一排除）</h3>
+    <div class="hypo">
+      <span class="tagv excl">✅ 排除</span>
+      <b>H1：降价 / 价格战导致？</b><br>
+      检验：均单额 21.5 → 22.0 万（+2.3%），综合毛利率 27.5% → 27.1%（−0.4pp，在正常区间）。价格未动，排除。
+    </div>
+    <div class="hypo">
+      <span class="tagv excl">✅ 排除</span>
+      <b>H2：整体市场需求萎缩？</b><br>
+      检验：剔除客户 A、B 后，其余客户营收 178 → 202 万（+13.5%），其余三区合计 +18 万。基本盘在涨，排除整体萎缩。
+    </div>
+    <div class="hypo">
+      <span class="tagv conf">⚠️ 成立</span>
+      <b>H3：大客户集中度风险？</b><br>
+      检验：前两大客户营收占比 <b>40.9% → 23.5%</b>；单一客户预算冻结即可引发公司级下滑 10%+。结构性风险成立，且此前未被预警。
+    </div>
+  </div>
+
+  <!-- ============ P5 结论与行动 ============ -->
+  <div class="panel" id="p5">
+    <h3>一页纸结论（管理层视角）</h3>
+    <div class="concl">
+      ① 本季营收 <b>−12.3%</b>（−37 万），超过预警阈值，为真异动；<br>
+      ② 归因路径：量效应 −43 万 → 集中于华东、华南 → <b>客户 A（华东，预算冻结）−51 万 + 客户 B（华南，招标延期）−10 万</b>，剔除后其余客户 +13.5%，基本盘健康；<br>
+      ③ 暴露的真正问题是<b>大客户集中度风险无预警机制</b>——本次是预算冻结，下次可能是竞对挖角，不能靠运气。
+    </div>
+    <h3>行动建议（可执行 · 带责任与时限）</h3>
+    <table>
+      <thead><tr><th>#</th><th>行动</th><th style="width:110px">责任方</th><th style="width:80px">时限</th><th style="width:170px">预期效果</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td>约客户 A 决策链（分管副总 + 财务），锁定二期预算解冻时间窗，纳入 Q3 滚动预测</td><td>华东销售负责人 + 售前</td><td>1 周内</td><td>缺口 −51 万的一半进入 Q3 漏斗</td></tr>
+        <tr><td>2</td><td>客户 B 招标延期对冲：商机池定向补充 ≥2 个同规模替代商机，投标资源前置</td><td>RevOps + 华东团队</td><td>2 周内</td><td>−10 万缺口对冲率 ≥50%</td></tr>
+        <tr><td>3</td><td><b>机制沉淀</b>：前五大客户占比 &gt;40%、单一客户环比变动 &gt;±10 万，纳入月度经营预警看板自动标红</td><td>经营分析（本人）</td><td>本月上线</td><td>同类风险从"事后发现"变"事前预警"</td></tr>
+      </tbody>
+    </table>
+    <div class="hint">行动 3 是这个 Demo 的落点：分析的价值不是解释过去，是把结论沉淀为机制，让下一次异动在看板上自动爆红，而不是再花三天人工归因。</div>
+  </div>
+
+  <div class="redlines">
+    <b>分析红线（真实项目中）</b>：① <b>口径先行</b>——签约 / 回款 / 确认收入三个口径先统一，再开算；② <b>归因要有证据链</b>——每个"因为"都要能指到一张表或一条公开信息，不猜；③ <b>结论必须可执行</b>——讲不出"谁在几周内做什么"的分析不交付。
+  </div>
+
+  <div class="method">
+    <b>方法论复用：同一套链路，换指标不改结构</b><br>
+    本 Demo 以营收为例，但五步结构不绑定指标——毛利率异动、回款率下滑、人效下降、获客成本上升均可套用。区别只在<b>第一步的拆解维度</b>：营收拆「量 × 价」，毛利率拆「收入结构 × 成本结构」，回款拆「账龄 × 客户信用」，人效拆「人员结构 × 人均产出」。第二步之后完全一致：下钻定位到具体对象 → 假设检验排除伪因 → 输出带责任方与时限的行动。
+    <br><b>给使用方的建议</b>：归因分析不要等季度末做。把「超阈值自动触发」写进看板预警规则，异动发生的当周就启动——拖到季度复盘再做，对冲窗口早已关闭，分析只能变成解释历史。
+  </div>
+
+  <div class="note">本 Demo 在浏览器本地运行，无任何网络请求。数据为脱敏虚构样例（与经营驾驶舱、Text-to-SQL Demo 同一世界观：五大区域 / 客户 A-L / 三条产品线）。真实落地版对接企业 BI 数仓，按月自动触发归因报告。联系方式：189 1098 9990 · 272702947@qq.com</div>
+</div>
+
+<script>
+/* ============ 区域数据（虚构 · 与其他 Demo 同世界观） ============ */
+var REGIONS = [
+  {name:'华东', q1:107, q2:62, drill:true,  cust:'east'},
+  {name:'华南', q1:78,  q2:68, drill:true,  cust:'south'},
+  {name:'华北', q1:60,  q2:68, drill:false},
+  {name:'西南', q1:35,  q2:44, drill:false},
+  {name:'西北', q1:21,  q2:22, drill:false}
+];
+var EAST_CUST = [
+  {name:'客户 A（S 级）', q1:71, q2:20, hot:true,  note:'预算冻结 · 二期推迟'},
+  {name:'客户 E（A 级）', q1:18, q2:22, hot:false, note:'存量维保稳定'},
+  {name:'客户 I（B 级）', q1:10, q2:11, hot:false, note:'小幅正增长'},
+  {name:'其他华东客户',  q1:8,  q2:9,  hot:false, note:'组合正常波动'}
+];
+var SOUTH_CUST = [
+  {name:'客户 B（A 级）', q1:52, q2:42, hot:true,  note:'招标延期至下季度'},
+  {name:'客户 G（B 级）', q1:15, q2:16, hot:false, note:'小幅正增长'},
+  {name:'客户 J（B 级）', q1:6,  q2:6,  hot:false, note:'持平'},
+  {name:'其他华南客户',  q1:5,  q2:4,  hot:false, note:'组合正常波动'}
+];
+var CUST_MAP = {east:EAST_CUST, south:SOUTH_CUST};
+
+function fmtW(n){ return n.toLocaleString('zh-CN'); }
+
+/* ============ P3 渲染 ============ */
+var MAXBAR = 110;
+function renderRegions(sel){
+  var tbody = document.getElementById('regBody');
+  var html = '';
+  for(var i=0;i<REGIONS.length;i++){
+    var r = REGIONS[i];
+    var d = r.q2 - r.q1;
+    var pct = (d/r.q1*100);
+    var isSel = (sel===r.name);
+    html += '<tr class="regrow'+(isSel?' sel':'')+'" onclick="renderRegions(\''+r.name+'\')">'
+      +'<td><b>'+r.name+'</b>'+(r.drill?' <span style="font-size:10px;color:#8a94a6">可下钻 ↓</span>':'')+'</td>'
+      +'<td class="num">'+fmtW(r.q1)+'</td>'
+      +'<td class="num">'+fmtW(r.q2)+'</td>'
+      +'<td class="num"><span class="chip '+(d<0?'bad':'good')+'">'+(d>0?'+':'')+d+'（'+(pct>0?'+':'')+pct.toFixed(1)+'%）</span></td>'
+      +'<td><div class="bar2"><span class="b1" style="width:'+(r.q1/MAXBAR*120)+'px"></span>'
+      +'<span class="b2" style="width:'+(r.q2/MAXBAR*120)+'px"></span></div></td>'
+      +'</tr>';
+  }
+  tbody.innerHTML = html;
+  renderDetail(sel);
+}
+function renderDetail(name){
+  var box = document.getElementById('regDetail');
+  var r = null;
+  for(var i=0;i<REGIONS.length;i++) if(REGIONS[i].name===name) r = REGIONS[i];
+  if(r && r.drill){
+    var h = '<h3>'+name+' · 客户明细下钻（万元）</h3><table><thead><tr><th>客户</th><th class="num">Q1</th><th class="num">Q2</th><th class="num">Δ</th><th>说明</th></tr></thead><tbody>';
+    var list = CUST_MAP[r.cust];
+    for(var j=0;j<list.length;j++){
+      var c = list[j];
+      var d = c.q2 - c.q1;
+      h += '<tr'+(c.hot?' style="background:#fdf3f1"':'')+'>'
+        +'<td><b>'+c.name+'</b></td>'
+        +'<td class="num">'+fmtW(c.q1)+'</td><td class="num">'+fmtW(c.q2)+'</td>'
+        +'<td class="num" style="color:'+(d<0?'#c0392b':'#1a7f4e')+';font-weight:700">'+(d>0?'+':'')+d+'</td>'
+        +'<td>'+c.note+'</td></tr>';
+    }
+    h += '</tbody></table><div class="hint">下钻阈值：单客户环比变动超过 ±10 万才逐户排查——其余区域组合变动在阈值内，不浪费分析资源。</div>';
+    box.innerHTML = h;
+  } else {
+    box.innerHTML = '<div class="hint" style="margin-top:6px">「'+name+'」变动 '+(r.q2-r.q1>0?'+':'')+(r.q2-r.q1)+' 万，在 ±10 万组合阈值内，无单客户异动，不下钻。</div>';
+  }
+}
+
+/* ============ 步骤切换 ============ */
+(function(){
+  var navs = document.querySelectorAll('.snav');
+  for(var i=0;i<navs.length;i++){
+    navs[i].onclick = (function(n){
+      return function(){
+        var all = document.querySelectorAll('.snav');
+        for(var k=0;k<all.length;k++) all[k].className = 'snav';
+        n.className = 'snav on';
+        var ps = document.querySelectorAll('.panel');
+        for(var k=0;k<ps.length;k++) ps[k].className = 'panel';
+        document.getElementById(n.getAttribute('data-p')).className = 'panel on';
+      };
+    })(navs[i]);
+  }
+})();
+
+renderRegions('华东');
+</script>
+</body>
+</html>

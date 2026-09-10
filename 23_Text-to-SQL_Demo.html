@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Text-to-SQL 经营查询 Demo · 王宏杰</title>
+<style>
+  :root{
+    --ink:#1a1d21; --ink-2:#3d434b; --ink-3:#666e78;
+    --line:#dfe3e8; --accent:#1f4e79; --accent-soft:#eaf1f8;
+    --bg:#fff; --tag:#f2f5f8; --ok:#1a7f4e; --warn:#b35900; --bad:#c0392b;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:"PingFang SC","Microsoft YaHei","Segoe UI",sans-serif;color:var(--ink);background:#eceff2;line-height:1.65;padding:24px 12px;}
+  .wrap{max-width:960px;margin:0 auto;background:var(--bg);padding:34px 38px 30px;box-shadow:0 2px 18px rgba(20,30,45,.10);}
+  .crumb{font-size:11.5px;color:var(--ink-3);margin-bottom:10px;}
+  .crumb a{color:var(--accent);text-decoration:none;}
+  h1{font-size:21px;color:var(--ink);}
+  .sub{font-size:12.5px;color:var(--ink-3);margin-top:4px;}
+  .badges{margin:10px 0 4px;display:flex;flex-wrap:wrap;gap:6px;}
+  .badge{font-size:10.8px;padding:2px 8px;border-radius:10px;background:var(--accent-soft);color:var(--accent);border:1px solid #cfe0ee;font-weight:600;}
+  .badge.gray{background:var(--tag);color:var(--ink-3);border-color:var(--line);}
+  hr{border:none;border-top:1px solid var(--line);margin:16px 0;}
+  .qbox{display:flex;gap:8px;margin-bottom:8px;}
+  #q{flex:1;font-size:13.5px;padding:9px 12px;border:1.5px solid #b8c4d0;border-radius:5px;outline:none;}
+  #q:focus{border-color:var(--accent);}
+  button.go{font-size:13.5px;font-weight:600;padding:9px 22px;border:none;border-radius:5px;background:var(--accent);color:#fff;cursor:pointer;}
+  button.go:hover{background:#173a5c;}
+  .chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px;}
+  .chip{font-size:12px;color:var(--ink-2);background:var(--tag);border:1px solid var(--line);border-radius:12px;padding:3px 11px;cursor:pointer;}
+  .chip:hover{border-color:var(--accent);color:var(--accent);}
+  .steps{display:grid;grid-template-columns:1fr 1.35fr 1fr;gap:10px;margin-bottom:14px;}
+  .step{border:1px solid var(--line);border-radius:6px;padding:10px 12px;background:#fbfcfd;}
+  .step .t{font-size:10.5px;color:var(--ink-3);letter-spacing:1px;font-weight:700;margin-bottom:5px;}
+  .step .v{font-size:12.3px;color:var(--ink-2);}
+  .sql{font-family:Consolas,Menlo,"Courier New",monospace;font-size:11.8px;color:#0b4f8a;white-space:pre-wrap;word-break:break-all;}
+  .verdict{border-radius:6px;padding:9px 12px;font-size:12.3px;margin-bottom:14px;border-left:3px solid var(--accent);background:var(--accent-soft);color:#12395c;}
+  .verdict.no{border-left-color:var(--bad);background:#fdf0ee;color:#7c2d20;}
+  .result h3{font-size:13.5px;color:var(--ink);margin-bottom:8px;}
+  table{border-collapse:collapse;width:100%;font-size:12.3px;margin-bottom:14px;}
+  th{background:var(--accent);color:#fff;font-weight:600;padding:6px 10px;text-align:left;white-space:nowrap;}
+  td{padding:5.5px 10px;border-bottom:1px solid var(--line);color:var(--ink-2);}
+  tr:nth-child(even) td{background:#f7f9fb;}
+  td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;}
+  .hl{background:#fff3cd;}
+  .chart{margin:4px 0 6px;}
+  .bar-row{display:flex;align-items:center;gap:8px;margin-bottom:5px;font-size:12px;}
+  .bar-k{flex:0 0 118px;text-align:right;color:var(--ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .bar-t{flex:1;background:#eef2f6;border-radius:3px;height:16px;position:relative;}
+  .bar-f{height:100%;border-radius:3px;background:linear-gradient(90deg,#2a6db1,#1f4e79);min-width:2px;}
+  .bar-v{flex:0 0 84px;color:var(--ink);font-weight:600;font-variant-numeric:tabular-nums;}
+  .note{font-size:11.8px;color:var(--ink-3);border-top:1px dashed var(--line);padding-top:10px;margin-top:6px;}
+  .schema{font-size:11.5px;color:var(--ink-3);margin-top:12px;background:var(--tag);border-radius:5px;padding:8px 12px;line-height:1.8;}
+  .schema b{color:var(--ink-2);}
+  .redlines{margin-top:18px;background:#fdf6ec;border:1px solid #ecd9b0;border-radius:6px;padding:10px 14px;font-size:12px;color:#6b5312;}
+  .redlines b{color:#8a6a1a;}
+  @media (max-width:720px){.steps{grid-template-columns:1fr;}.wrap{padding:22px 16px;}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="crumb">◄ <a href="./index.html">返回作品集首页</a></div>
+  <h1>Text-to-SQL 经营查询 Demo</h1>
+  <div class="sub">业务人员用口语提问，系统自动生成 SQL → 执行 → 出数出图。数据为虚构示例，本地运行。</div>
+  <div class="badges">
+    <span class="badge">自然语言 → SQL</span>
+    <span class="badge">自动图表</span>
+    <span class="badge">口径提示</span>
+    <span class="badge gray">纯前端 · 数据不出域</span>
+    <span class="badge gray">示例数据为虚构</span>
+  </div>
+  <hr>
+
+  <div class="qbox">
+    <input id="q" placeholder="试着问：各区域本月的销售额是多少？" />
+    <button class="go" onclick="ask()">查询</button>
+  </div>
+  <div class="chips" id="chips"></div>
+
+  <div class="steps">
+    <div class="step"><div class="t">① 意图解析</div><div class="v" id="stIntent">—</div></div>
+    <div class="step"><div class="t">② 生成 SQL</div><div class="v sql" id="stSql">—</div></div>
+    <div class="step"><div class="t">③ 执行结果</div><div class="v" id="stExec">—</div></div>
+  </div>
+
+  <div class="verdict" id="verdict" style="display:none"></div>
+  <div class="result" id="result"></div>
+
+  <div class="schema">
+    <b>数据表（虚构 · 星型模型）</b>：<br>
+    · <b>region</b> 区域表（region_id, region_name 华东/华南/华北/西南/西北）<br>
+    · <b>customer</b> 客户表（cust_id, cust_name 客户A~L, region_id, level S/A/B）<br>
+    · <b>orders</b> 订单表（order_id, cust_id, month 2026-03~08, product_line 显示屏/照明/储能, amount 签约额, cost 成本, paid 回款额）<br>
+    · <b>opportunity</b> 商机表（opp_id, cust_id, stage 商机阶段, prob 中标概率, amount 预估金额, days_in_stage 停留天数）
+  </div>
+
+  <div class="redlines">
+    <b>部署红线（真实项目中）</b>：① 只读账号 + 行级权限，生成 SQL 白名单校验；② <b>口径先治理</b>——"营收"必须先定义是签约口径还是回款口径，否则 AI 会更快地给出三个不一样的答案；③ 结果必须带来源表与口径说明，供人工校验。
+  </div>
+
+  <div class="note">本 Demo 在浏览器本地运行，无任何网络请求。真实落地版对接企业 CRM / ERP 只读库，配口径字典与权限校验。联系方式：189 1098 9990 · 272702947@qq.com</div>
+</div>
+
+<script>
+/* ============ 虚构数据（与经营驾驶舱 Demo 同一套世界观） ============ */
+var REGIONS = ['华东','华南','华北','西南','西北'];
+var CUST = [
+  {id:'C01',name:'客户A',region:'华东',level:'S',sc:2.93},
+  {id:'C02',name:'客户B',region:'华南',level:'A',sc:2.20},
+  {id:'C03',name:'客户C',region:'华北',level:'S',sc:1.72},
+  {id:'C04',name:'客户D',region:'西南',level:'B',sc:1.28},
+  {id:'C05',name:'客户E',region:'华东',level:'A',sc:1.01},
+  {id:'C06',name:'客户F',region:'西北',level:'B',sc:0.78},
+  {id:'C07',name:'客户G',region:'华南',level:'A',sc:0.64},
+  {id:'C08',name:'客户H',region:'华北',level:'B',sc:0.49},
+  {id:'C09',name:'客户I',region:'华东',level:'A',sc:0.40},
+  {id:'C10',name:'客户J',region:'华南',level:'B',sc:0.27},
+  {id:'C11',name:'客户K',region:'华北',level:'B',sc:0.18},
+  {id:'C12',name:'客户L',region:'西南',level:'A',sc:0.10}
+];
+var LINES = ['显示屏','照明','储能'];
+var ORDERS = [];
+(function(){
+  var seed = 42;
+  function rnd(){ seed = (seed*9301+49297)%233280; return seed/233280; }
+  var months=['2026-03','2026-04','2026-05','2026-06','2026-07','2026-08'];
+  var oid=1000;
+  for(var m=0;m<months.length;m++){
+    for(var i=0;i<CUST.length;i++){
+      if(rnd()<0.45) continue;
+      var amt=Math.round(CUST[i].sc*12.9*(0.6+rnd()*0.8))*10000;
+      var margin=0.10+rnd()*0.25;
+      var cost=Math.round(amt*(1-margin));
+      var paid= Math.round(amt*(0.7+rnd()*0.3));
+      ORDERS.push({id:'O'+(oid++),cust:CUST[i].id,month:months[m],
+        line:LINES[Math.floor(rnd()*3)],amount:amt,cost:cost,paid:paid});
+    }
+  }
+})();
+var OPPS = [
+  {id:'P01',cust:'C01',stage:'商务谈判',prob:0.7,amount:1300000,days:18},
+  {id:'P02',cust:'C03',stage:'方案报价',prob:0.5,amount:950000,days:46},
+  {id:'P03',cust:'C05',stage:'需求确认',prob:0.3,amount:480000,days:52},
+  {id:'P04',cust:'C02',stage:'商务谈判',prob:0.65,amount:720000,days:22},
+  {id:'P05',cust:'C07',stage:'初步接触',prob:0.15,amount:280000,days:9},
+  {id:'P06',cust:'C09',stage:'方案报价',prob:0.45,amount:580000,days:41},
+  {id:'P07',cust:'C12',stage:'商务谈判',prob:0.6,amount:1050000,days:30},
+  {id:'P08',cust:'C10',stage:'需求确认',prob:0.25,amount:240000,days:57},
+  {id:'P09',cust:'C06',stage:'方案报价',prob:0.4,amount:420000,days:38},
+  {id:'P10',cust:'C11',stage:'初步接触',prob:0.1,amount:180000,days:12}
+];
+
+function custOf(id){ for(var i=0;i<CUST.length;i++) if(CUST[i].id===id) return CUST[i]; return null; }
+function fmt(n){ return n>=10000 ? (n/10000).toFixed(1)+' 万' : String(Math.round(n)); }
+function pct(n){ return (n*100).toFixed(1)+'%'; }
+
+/* ============ 意图库：关键词 → SQL → 执行器 ============ */
+var INTENTS = [
+{
+  name:'按区域汇总销售额（本月=最新月份）',
+  keys:['区域','地区','销售额','营收','销售额','本月','签约'],
+  sql:"SELECT r.region_name AS 区域, SUM(o.amount) AS 销售额\nFROM orders o JOIN customer c ON o.cust_id=c.cust_id\nJOIN region r ON c.region_id=r.region_id\nWHERE o.month='2026-08'\nGROUP BY r.region_name ORDER BY 2 DESC",
+  note:'口径：销售额 = 签约口径（非回款口径）。回款口径见"回款率"提问。',
+  run:function(){
+    var rows=REGIONS.map(function(rg){
+      var sum=0;
+      ORDERS.forEach(function(o){ if(o.month==='2026-08' && custOf(o.cust).region===rg) sum+=o.amount; });
+      return {区域:rg, 销售额:sum};
+    }).filter(function(x){return x.销售额>0;}).sort(function(a,b){return b.销售额-a.销售额;});
+    return {cols:['区域','销售额'],rows:rows,chart:{k:'区域',v:'销售额'},fmts:{销售额:fmt}};
+  }
+},
+{
+  name:'客户累计签约额 Top N',
+  keys:['客户','top','前','累计','排名','贡献','大客户'],
+  sql:"SELECT c.cust_name AS 客户, r.region_name AS 区域,\n       SUM(o.amount) AS 累计签约额\nFROM orders o JOIN customer c ON o.cust_id=c.cust_id\nJOIN region r ON c.region_id=r.region_id\nGROUP BY c.cust_name, r.region_name\nORDER BY 3 DESC LIMIT 5",
+  note:'与驾驶舱 Demo 同一结论：前 20% 客户贡献约 50% 营收——客户集中度必须监控。',
+  run:function(){
+    var agg={};
+    ORDERS.forEach(function(o){
+      var c=custOf(o.cust);
+      var k=c.name;
+      agg[k]=agg[k]||{区域:c.region,额:0};
+      agg[k].额+=o.amount;
+    });
+    var rows=Object.keys(agg).map(function(k){return {客户:k,区域:agg[k].区域,累计签约额:agg[k].额};})
+      .sort(function(a,b){return b.累计签约额-a.累计签约额;}).slice(0,5);
+    return {cols:['客户','区域','累计签约额'],rows:rows,chart:{k:'客户',v:'累计签约额'},fmts:{累计签约额:fmt}};
+  }
+},
+{
+  name:'各产品线毛利率',
+  keys:['产品线','产品','毛利率','利润','盈亏','赚钱'],
+  sql:"SELECT o.product_line AS 产品线, SUM(o.amount) AS 签约额,\n       SUM(o.amount-o.cost)/SUM(o.amount) AS 毛利率\nFROM orders o GROUP BY o.product_line ORDER BY 2 DESC",
+  note:'毛利率低于 25% 底线的业务需专项评审（红线来自《经营五表》③ 项目盈亏表）。',
+  run:function(){
+    var agg={};
+    ORDERS.forEach(function(o){ agg[o.line]=agg[o.line]||{额:0,毛:0}; agg[o.line].额+=o.amount; agg[o.line].毛+=o.amount-o.cost; });
+    var rows=Object.keys(agg).map(function(k){return {产品线:k,签约额:agg[k].额,毛利率:agg[k].毛/agg[k].额};})
+      .sort(function(a,b){return b.签约额-a.签约额;});
+    return {cols:['产品线','签约额','毛利率'],rows:rows,chart:{k:'产品线',v:'签约额'},fmts:{签约额:fmt,毛利率:pct}};
+  }
+},
+{
+  name:'高潜商机回款预测（概率加权）',
+  keys:['商机','高潜','回款','预测','加权','pipeline','漏斗'],
+  sql:"SELECT p.opp_id AS 商机, c.cust_name AS 客户, p.stage AS 阶段,\n       p.prob AS 概率, p.amount AS 预估金额,\n       p.prob*p.amount AS 加权金额\nFROM opportunity p JOIN customer c ON p.cust_id=c.cust_id\nORDER BY 6 DESC",
+  note:'概率加权预测 = Σ(中标概率 × 预估金额)，比"拍脑袋报数"可解释、可复盘。',
+  run:function(){
+    var rows=OPPS.map(function(p){
+      var c=custOf(p.cust);
+      return {商机:p.id,客户:c.name,区域:c.region,阶段:p.stage,概率:p.prob,预估金额:p.amount,加权金额:Math.round(p.prob*p.amount)};
+    }).sort(function(a,b){return b.加权金额-a.加权金额;});
+    var tot=rows.reduce(function(a,b){return a+b.加权金额;},0);
+    rows.总计='商机加权总额 '+fmt(tot);
+    return {cols:['商机','客户','区域','阶段','概率','预估金额','加权金额'],rows:rows,fmts:{概率:pct,预估金额:fmt,加权金额:fmt}};
+  }
+},
+{
+  name:'各区域回款率',
+  keys:['回款率','回款','收现','dsO','账期','收不回'],
+  sql:"SELECT r.region_name AS 区域, SUM(o.paid) AS 回款额,\n       SUM(o.paid)/SUM(o.amount) AS 回款率\nFROM orders o JOIN customer c ON o.cust_id=c.cust_id\nJOIN region r ON c.region_id=r.region_id\nGROUP BY r.region_name ORDER BY 3 ASC",
+  note:'回款率 &lt; 85% 的区域应列入预警（红线来自《经营五表》⑤ 人效与回款表）。',
+  run:function(){
+    var agg={};
+    ORDERS.forEach(function(o){
+      var rg=custOf(o.cust).region;
+      agg[rg]=agg[rg]||{amt:0,paid:0};
+      agg[rg].amt+=o.amount; agg[rg].paid+=o.paid;
+    });
+    var rows=Object.keys(agg).map(function(k){return {区域:k,签约额:agg[k].amt,回款额:agg[k].paid,回款率:agg[k].paid/agg[k].amt};})
+      .sort(function(a,b){return a.回款率-b.回款率;});
+    return {cols:['区域','签约额','回款额','回款率'],rows:rows,chart:{k:'区域',v:'回款率'},fmts:{签约额:fmt,回款额:fmt,回款率:pct}};
+  }
+},
+{
+  name:'近 6 个月营收趋势',
+  keys:['趋势','近','个月','月度','环比','增长','变化'],
+  sql:"SELECT month AS 月份, SUM(amount) AS 签约额\nFROM orders GROUP BY month ORDER BY month",
+  note:'趋势要看"连续性"而非单月高低——单月波动大概率是大单错期。',
+  run:function(){
+    var agg={};
+    ORDERS.forEach(function(o){ agg[o.month]=agg[o.month]||0; agg[o.month]+=o.amount; });
+    var rows=Object.keys(agg).sort().map(function(m){return {月份:m,签约额:agg[m]};});
+    return {cols:['月份','签约额'],rows:rows,chart:{k:'月份',v:'签约额'},fmts:{签约额:fmt}};
+  }
+},
+{
+  name:'停留超期商机（风险预警）',
+  keys:['停留','超','天','风险','卡住','延迟','预警','40'],
+  sql:"SELECT p.opp_id AS 商机, c.cust_name AS 客户, p.stage AS 阶段,\n       p.days_in_stage AS 停留天数, p.amount AS 预估金额\nFROM opportunity p JOIN customer c ON p.cust_id=c.cust_id\nWHERE p.days_in_stage > 40 ORDER BY 4 DESC",
+  note:'停留 &gt; 40 天的商机默认降概率或转弃——这是"事前预警"替代"事后复盘"的核心动作。',
+  run:function(){
+    var rows=OPPS.filter(function(p){return p.days>40;}).map(function(p){
+      var c=custOf(p.cust);
+      return {商机:p.id,客户:c.name,区域:c.region,阶段:p.stage,停留天数:p.days,预估金额:p.amount};
+    }).sort(function(a,b){return b.停留天数-a.停留天数;});
+    return {cols:['商机','客户','区域','阶段','停留天数','预估金额'],rows:rows,fmts:{预估金额:fmt}};
+  }
+},
+{
+  name:'客户复购情况',
+  keys:['复购','复购率','复购了','几次','重复','老客户','转介绍'],
+  sql:"SELECT c.cust_name AS 客户, COUNT(o.order_id) AS 订单数,\n       SUM(o.amount) AS 累计签约额\nFROM orders o JOIN customer c ON o.cust_id=c.cust_id\nGROUP BY c.cust_name HAVING COUNT(o.order_id) >= 2\nORDER BY 2 DESC",
+  note:'复购客户是利润基本盘——老客户获客成本约为新客户的 1/5。',
+  run:function(){
+    var agg={};
+    ORDERS.forEach(function(o){
+      var c=custOf(o.cust);
+      agg[c.name]=agg[c.name]||{n:0,amt:0};
+      agg[c.name].n++; agg[c.name].amt+=o.amount;
+    });
+    var rows=Object.keys(agg).filter(function(k){return agg[k].n>=2;})
+      .map(function(k){return {客户:k,订单数:agg[k].n,累计签约额:agg[k].amt};})
+      .sort(function(a,b){return b.订单数-a.订单数;});
+    return {cols:['客户','订单数','累计签约额'],rows:rows,chart:{k:'客户',v:'累计签约额'},fmts:{累计签约额:fmt}};
+  }
+}
+];
+
+var PRESETS=[
+  '各区域本月的销售额是多少？',
+  '累计签约额前 5 的客户是谁？',
+  '各产品线的毛利率如何？',
+  '高潜商机的加权回款预测',
+  '哪个区域回款率最低？',
+  '近 6 个月营收趋势',
+  '有没有商机停留超过 40 天？',
+  '哪些客户复购了？'
+];
+
+function match(q){
+  var s=q.replace(/[\s？?。，,.！!]/g,'');
+  var best=null,score=0;
+  INTENTS.forEach(function(it){
+    var sc=0;
+    it.keys.forEach(function(k){
+      if(s.indexOf(k.toLowerCase())>=0) sc+= k.length>=2?2:1;
+    });
+    if(sc>score){score=sc;best=it;}
+  });
+  return score>=2?best:null;
+}
+
+function ask(preset){
+  var q = preset || document.getElementById('q').value;
+  if(!q) return;
+  if(!preset) document.getElementById('q').value=q;
+  var it=match(q);
+  document.getElementById('stIntent').textContent = it?('识别意图：'+it.name):'未识别到匹配意图';
+  document.getElementById('stSql').textContent = it?it.sql:'—';
+  document.getElementById('stExec').textContent = it?'已执行 · '+new Date().toLocaleTimeString():'未执行';
+  var v=document.getElementById('verdict');
+  var res=document.getElementById('result');
+  if(!it){
+    v.style.display='block';
+    v.className='verdict no';
+    v.innerHTML='<b>未匹配到可执行的查询意图。</b>本 Demo 仅演示固定口径集（区域销售 / 客户 Top / 毛利率 / 商机预测 / 回款率 / 趋势 / 超期预警 / 复购）。真实系统中会先要求补充口径定义，<b>而不是猜测用户意图硬算</b>——这与 RAG Demo 的"未命中不编造"是同一条红线。';
+    res.innerHTML='';
+    return;
+  }
+  var data=it.run();
+  v.style.display='block';
+  v.className='verdict';
+  v.innerHTML='<b>✓ 查询完成</b>　'+it.note;
+  var h='<h3>查询结果'+(data.rows.总数||data.rows.总计?'（'+ (data.rows.总计||'') +'）':'')+'</h3>';
+  if(data.rows.length===0){
+    h+='<div style="font-size:12.5px;color:var(--ink-3)">当前条件下无数据。</div>';
+  }else{
+    h+='<table><thead><tr>';
+    data.cols.forEach(function(c){ h+='<th class="'+(c.indexOf('率')<0&&c.indexOf('天数')<0&&c.indexOf('数')<0?'':'num')+'">'+c+'</th>'; });
+    h+='</tr></thead><tbody>';
+    data.rows.forEach(function(r){
+      h+='<tr>';
+      data.cols.forEach(function(c){
+        var val=r[c];
+        var f=data.fmts&&data.fmts[c];
+        if(f) val=f(val);
+        if(c==='回款率'&&typeof r[c]==='number') val='<span style="color:'+(r[c]<0.85?'#c0392b':'#1a7f4e')+';font-weight:600">'+val+'</span>';
+        if(c==='停留天数'&&r[c]>40) val='<span style="color:#c0392b;font-weight:600">'+val+' 天 ⚠</span>';
+        if(c==='毛利率'&&typeof r[c]==='number') val='<span style="color:'+(r[c]<0.25?'#c0392b':'#1a7f4e')+';font-weight:600">'+val+'</span>';
+        h+='<td class="'+(f?'num':'')+'">'+val+'</td>';
+      });
+      h+='</tr>';
+    });
+    h+='</tbody></table>';
+    if(data.chart){
+      var pairs=data.rows.map(function(r){return {k:r[data.chart.k],v:r[data.chart.v]};});
+      var max=Math.max.apply(null,pairs.map(function(p){return p.v;}));
+      h+='<div class="chart">';
+      pairs.forEach(function(p){
+        h+='<div class="bar-row"><div class="bar-k">'+p.k+'</div><div class="bar-t"><div class="bar-f" style="width:'+(p.v/max*100)+'%"></div></div><div class="bar-v">'+(data.fmts&&data.fmts[data.chart.v]?data.fmts[data.chart.v](p.v):p.v)+'</div></div>';
+      });
+      h+='</div>';
+    }
+  }
+  res.innerHTML=h;
+}
+
+document.getElementById('chips').innerHTML = PRESETS.map(function(p){
+  return '<span class="chip" onclick="ask(\''+p.replace(/'/g,"\\'")+'\')">'+p+'</span>';
+}).join('');
+document.getElementById('q').addEventListener('keydown',function(e){ if(e.key==='Enter') ask(); });
+ask(PRESETS[0]);
+</script>
+</body>
+</html>

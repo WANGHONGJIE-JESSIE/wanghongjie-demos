@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI 线索评分与客户分层 Demo · 王宏杰</title>
+<style>
+  :root{
+    --ink:#1a1d21; --ink-2:#3d434b; --ink-3:#666e78;
+    --line:#dfe3e8; --accent:#1f4e79; --accent-soft:#eaf1f8;
+    --bg:#fff; --tag:#f2f5f8; --ok:#1a7f4e; --warn:#b35900; --bad:#c0392b; --rose:#c0426e;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:"PingFang SC","Microsoft YaHei","Segoe UI",sans-serif;color:var(--ink);background:#eceff2;line-height:1.65;padding:24px 12px;}
+  .wrap{max-width:1000px;margin:0 auto;background:var(--bg);padding:34px 38px 30px;box-shadow:0 2px 18px rgba(20,30,45,.10);}
+  .crumb{font-size:11.5px;color:var(--ink-3);margin-bottom:10px;}
+  .crumb a{color:var(--accent);text-decoration:none;}
+  h1{font-size:21px;color:var(--ink);}
+  .sub{font-size:12.5px;color:var(--ink-3);margin-top:4px;}
+  .badges{margin:10px 0 4px;display:flex;flex-wrap:wrap;gap:6px;}
+  .badge{font-size:10.8px;padding:2px 8px;border-radius:10px;background:var(--accent-soft);color:var(--accent);border:1px solid #cfe0ee;font-weight:600;}
+  .badge.gray{background:var(--tag);color:var(--ink-3);border-color:var(--line);}
+  hr{border:none;border-top:1px solid var(--line);margin:16px 0;}
+
+  .tabs{display:flex;gap:6px;margin-bottom:14px;}
+  .tab{font-size:12.5px;font-weight:600;padding:7px 16px;border-radius:6px;border:1px solid var(--line);background:var(--tag);color:var(--ink-2);cursor:pointer;}
+  .tab:hover{border-color:var(--accent);color:var(--accent);}
+  .tab.on{background:var(--accent);color:#fff;border-color:var(--accent);}
+  .pane{display:none;} .pane.on{display:block;}
+
+  .kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px;}
+  .kpi{border:1px solid var(--line);border-radius:7px;padding:10px 12px;background:#fbfcfd;}
+  .kpi .t{font-size:11px;color:var(--ink-3);}
+  .kpi .v{font-size:17px;font-weight:700;margin-top:2px;font-variant-numeric:tabular-nums;}
+  .kpi .d{font-size:11px;margin-top:2px;color:var(--ink-3);}
+  .verdict{border-radius:6px;padding:10px 14px;font-size:12.6px;margin-bottom:14px;border-left:3px solid var(--accent);background:var(--accent-soft);color:#12395c;line-height:1.8;}
+  .verdict b{color:#0d2b48;}
+
+  .filters{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;}
+  .fbtn{font-size:12px;font-weight:600;padding:4px 12px;border-radius:12px;border:1px solid var(--line);background:var(--tag);color:var(--ink-2);cursor:pointer;}
+  .fbtn.on{background:var(--accent);color:#fff;border-color:var(--accent);}
+
+  table{border-collapse:collapse;width:100%;font-size:12.2px;margin-bottom:12px;}
+  th{background:var(--accent);color:#fff;font-weight:600;padding:6px 9px;text-align:left;white-space:nowrap;}
+  td{padding:5.5px 9px;border-bottom:1px solid var(--line);color:var(--ink-2);}
+  tr:nth-child(even) td{background:#f7f9fb;}
+  td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;}
+  .lrow{cursor:pointer;}
+  .lrow:hover td{background:#eef4fa;}
+  .tier{display:inline-block;font-size:11px;font-weight:700;border-radius:10px;padding:1px 9px;}
+  .tier.h{background:#fdf0ee;color:var(--bad);}
+  .tier.m{background:#fdf3e3;color:var(--warn);}
+  .tier.l{background:#eef2f6;color:var(--ink-3);}
+  .score{font-weight:700;font-variant-numeric:tabular-nums;}
+
+  /* detail */
+  .detail{border:1px solid var(--line);border-radius:8px;padding:14px 18px;background:#fbfcfd;margin-bottom:12px;}
+  .detail h3{font-size:13.5px;margin-bottom:2px;}
+  .detail .why{font-size:12.3px;color:var(--ink-2);margin-bottom:10px;line-height:1.85;}
+  .fac{display:flex;align-items:center;gap:8px;font-size:12px;margin-bottom:5px;}
+  .fac .fn{flex:0 0 130px;color:var(--ink-2);}
+  .fac .fv{flex:0 0 118px;color:var(--ink-3);font-size:11.4px;}
+  .fac .ft{flex:1;background:#e8edf3;border-radius:3px;height:13px;position:relative;}
+  .fac .ff{height:100%;border-radius:3px;background:linear-gradient(90deg,#2a6db1,#1f4e79);}
+  .fac .fs{flex:0 0 52px;text-align:right;font-weight:600;font-variant-numeric:tabular-nums;}
+  .action{margin-top:10px;background:#eef7f2;border-left:3px solid var(--ok);border-radius:4px;padding:8px 12px;font-size:12.2px;color:#1b4b38;line-height:1.8;}
+
+  h3.sec{font-size:14px;color:var(--ink);margin:16px 0 8px;}
+  .hint{font-size:11.8px;color:var(--ink-3);line-height:1.8;}
+
+  .flow{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:8px 0 14px;font-size:12px;}
+  .fnode{background:var(--accent-soft);border:1px solid #cfe0ee;border-radius:6px;padding:6px 11px;color:#12395c;font-weight:600;}
+  .farr{color:#8a94a6;font-weight:700;}
+
+  .redlines{margin-top:18px;background:#fdf6ec;border:1px solid #ecd9b0;border-radius:6px;padding:10px 14px;font-size:12px;color:#6b5312;line-height:1.9;}
+  .redlines b{color:#8a6a1a;}
+  .method{margin-top:10px;background:#eef3fa;border:1px solid #cfdff0;border-radius:6px;padding:10px 14px;font-size:12px;color:#22384f;line-height:1.9;}
+  .method b{color:#0d2b48;}
+  .note{font-size:11.8px;color:var(--ink-3);border-top:1px dashed var(--line);padding-top:10px;margin-top:14px;}
+  @media (max-width:720px){.kpis{grid-template-columns:1fr;}.fac .fn{flex-basis:100px;}.fac .fv{flex-basis:100px;}.wrap{padding:22px 16px;}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="crumb">◄ <a href="./index.html">返回作品集首页</a></div>
+  <h1>AI 线索评分与客户分层 Demo</h1>
+  <div class="sub">新线索进池 → 评分卡自动打分 → 高 / 中 / 低意向分层 → 自动分配跟进优先级。评分卡规则全部来自 19 年 B 端政企经验，可解释、可校准。数据为虚构示例，本地运行。</div>
+  <div class="badges">
+    <span class="badge">评分卡建模</span>
+    <span class="badge">可解释 · 非黑盒</span>
+    <span class="badge">RFM-ABC 分层</span>
+    <span class="badge">自动分配与提醒</span>
+    <span class="badge gray">CRM 对接示意</span>
+    <span class="badge gray">示例数据为虚构</span>
+  </div>
+  <hr>
+
+  <div class="tabs">
+    <div class="tab on" data-p="t1">① 线索评分与优先级</div>
+    <div class="tab" data-p="t2">② 存量客户 RFM 分层</div>
+  </div>
+
+  <!-- ============ TAB 1 线索评分 ============ -->
+  <div class="pane on" id="t1">
+    <div class="flow">
+      <span class="fnode">新线索进 CRM</span><span class="farr">→</span>
+      <span class="fnode">字段自动抓取</span><span class="farr">→</span>
+      <span class="fnode">评分卡打分（0-100）</span><span class="farr">→</span>
+      <span class="fnode">高/中/低分层</span><span class="farr">→</span>
+      <span class="fnode">自动分配 + 跟进提醒</span><span class="farr">→</span>
+      <span class="fnode">每月复评校准</span>
+    </div>
+    <div class="kpis" id="sumKpi"></div>
+    <div class="verdict">
+      <b>机制价值：</b>24 条线索不再靠销售"凭感觉"排序——<b>高意向 24 小时内必触达，低意向进自动化培育池不占人力</b>。
+      评分卡每个因子都有业务含义（见点击行详情），销售看得懂、才愿意用；每季度用实际转化数据回校权重。
+    </div>
+
+    <div class="filters" id="filters"></div>
+    <table>
+      <thead><tr>
+        <th>线索</th><th>客户（脱敏）</th><th>来源</th><th class="num">预估金额</th><th class="num">得分</th><th>分层</th><th>建议动作</th>
+      </tr></thead>
+      <tbody id="leadBody"></tbody>
+    </table>
+    <div class="hint">点击任意行查看评分明细（每个因子拿了多少分、为什么）。</div>
+    <div id="leadDetail"></div>
+  </div>
+
+  <!-- ============ TAB 2 RFM 分层 ============ -->
+  <div class="pane" id="t2">
+    <div class="verdict">
+      <b>存量客户分层逻辑：</b>R 最近成交（1-5）× F 成交频次（1-5）× M 成交金额（1-5），
+      八象限分层后匹配差异化动作——<b>资源投向"重要价值"，挽回动作盯"重要保持"，其余走低成本培育</b>。
+      与线索评分共用同一套世界观：客户 A、B 正是《营收异动归因分析 Demo》中下滑的两大客户——R 值掉到 2 后自动从"重要价值"降为"重要保持"，触发挽回流程。
+    </div>
+    <table>
+      <thead><tr>
+        <th>客户</th><th>区域</th><th class="num">R 最近成交</th><th class="num">F 频次</th><th class="num">M 金额</th><th>分层结果</th><th>建议动作</th>
+      </tr></thead>
+      <tbody id="rfmBody"></tbody>
+    </table>
+    <h3 class="sec">分层统计与资源投放建议</h3>
+    <div id="rfmSummary"></div>
+  </div>
+
+  <div class="redlines">
+    <b>落地红线（真实项目中）</b>：① <b>可解释优先</b>——用透明评分卡而非黑盒模型，销售能看懂每个因子，不信任 = 不使用；② <b>人工兜底</b>——高分线索 24 小时未跟进自动升级提醒到主管，AI 只做排序不做决策；③ <b>季度校准</b>——用实际赢单数据回测各因子权重，行业采购周期变了，权重就要变。
+  </div>
+
+  <div class="method">
+    <b>设计思路：为什么用可解释评分卡，而不是黑盒模型</b><br>
+    评分卡的价值不取决于模型精度，取决于<b>销售用不用</b>。看不懂的规则不会被采纳，所以每个因子都必须能说出业务含义与权重依据（点击任意线索可查看该条线索的评分明细）。
+    <br><b>权重来源</b>：19 年 B 端政企项目的真实输单与赢单经验——政企客户「采购窗口期」权重高于「留资活跃度」，央企「预算冻结」前通常有可识别的公开信号。AI 落地的瓶颈从来不是算法，是业务规则能否沉淀成代码。
+    <br><b>给使用方的建议</b>：本套权重按政企大单场景校准，换行业必须重新校准——用近 12 个月实际赢单数据回测各因子区分度，把区分度低的因子替换掉再上线，并保留季度回校机制（采购周期变了，权重就要跟着变）。
+  </div>
+
+  <div class="note">本 Demo 在浏览器本地运行，无任何网络请求。数据为脱敏虚构样例（与其他 Demo 同一世界观：五大区域 / 客户 A-L / 三条产品线）。真实落地版对接企业 CRM（纷享销客 / 销售易 / Salesforce），字段自动同步、评分每日刷新。联系方式：189 1098 9990 · 272702947@qq.com</div>
+</div>
+
+<script>
+/* ============ 评分卡定义（权重 = 业务经验沉淀） ============ */
+var SC = {
+  level:  {max:25, map:{'S 级存量':25,'A 级存量':18,'B 级存量':10,'新客户':8},
+           why:'存量层级代表预算体量与决策链成熟度，权重最高'},
+  demand: {max:20, map:{'明确立项/有预算':20,'有预算意向':13,'初步接触':6},
+           why:'需求明确度直接决定转化概率'},
+  window: {max:20, map:{'3 个月内':20,'3-6 个月':11,'6 个月以上':4},
+           why:'政企采购有强周期性，窗口期决定资源投入节奏'},
+  history:{max:15, map:{'存量复购':15,'老客新需求':11,'新客户':5},
+           why:'复购客户成交成本约为新客的 1/5'},
+  chain:  {max:10, map:{'已触达决策人':10,'仅执行层':5,'未触达':2},
+           why:'政企项目决策权在分管领导，不在使用部门'},
+  source: {max:10, map:{'转介绍':10,'招投标公告':8,'展会':5,'官网留资':3},
+           why:'来源质量即初始信任度'}
+};
+var TIER = function(s){ return s>=75 ? 'h' : (s>=50 ? 'm' : 'l'); };
+var TIER_NAME = {h:'高意向',m:'中意向',l:'低意向'};
+var TIER_ACT = {
+  h:'24 小时内触达决策人，售前定制方案，进重点商机池',
+  m:'3 天内首访，纳入周度培育节奏，每两周复评',
+  l:'自动化内容培育（行业案例 / 政策解读），月度复评'
+};
+
+/* ============ 线索池（虚构 · 24 条） ============ */
+var LEADS = [
+  {id:'L01',cust:'华东某省电力公司',src:'转介绍',lv:'S 级存量',dm:'明确立项/有预算',wd:'3 个月内',hi:'存量复购',ch:'已触达决策人',amt:54,ind:'能源电力'},
+  {id:'L02',cust:'华南某市城管局',src:'招投标公告',lv:'新客户',dm:'明确立项/有预算',wd:'3 个月内',hi:'新客户',ch:'已触达决策人',amt:27,ind:'政务'},
+  {id:'L03',cust:'华北某科研院所',src:'展会',lv:'S 级存量',dm:'有预算意向',wd:'3-6 个月',hi:'存量复购',ch:'仅执行层',amt:38,ind:'科研院所'},
+  {id:'L04',cust:'华东某地铁集团',src:'招投标公告',lv:'A 级存量',dm:'明确立项/有预算',wd:'3 个月内',hi:'老客新需求',ch:'仅执行层',amt:62,ind:'交通'},
+  {id:'L05',cust:'西南某工业园区',src:'官网留资',lv:'B 级存量',dm:'初步接触',wd:'6 个月以上',hi:'新客户',ch:'未触达',amt:14,ind:'园区'},
+  {id:'L06',cust:'华北某高校',src:'展会',lv:'A 级存量',dm:'有预算意向',wd:'3-6 个月',hi:'新客户',ch:'仅执行层',amt:17,ind:'教育'},
+  {id:'L07',cust:'西北某能源集团',src:'转介绍',lv:'S 级存量',dm:'明确立项/有预算',wd:'3-6 个月',hi:'存量复购',ch:'已触达决策人',amt:90,ind:'能源电力'},
+  {id:'L08',cust:'华东某智慧城市项目',src:'官网留资',lv:'B 级存量',dm:'有预算意向',wd:'6 个月以上',hi:'新客户',ch:'未触达',amt:19,ind:'政务'},
+  {id:'L09',cust:'华南某半导体厂',src:'展会',lv:'A 级存量',dm:'明确立项/有预算',wd:'3 个月内',hi:'老客新需求',ch:'已触达决策人',amt:46,ind:'制造'},
+  {id:'L10',cust:'华北某医院',src:'官网留资',lv:'B 级存量',dm:'初步接触',wd:'3-6 个月',hi:'新客户',ch:'未触达',amt:10,ind:'医疗'},
+  {id:'L11',cust:'西南某水电站',src:'招投标公告',lv:'S 级存量',dm:'有预算意向',wd:'3 个月内',hi:'存量复购',ch:'仅执行层',amt:70,ind:'能源电力'},
+  {id:'L12',cust:'华东某商业地产',src:'展会',lv:'B 级存量',dm:'初步接触',wd:'6 个月以上',hi:'新客户',ch:'未触达',amt:11,ind:'地产'},
+  {id:'L13',cust:'华南某港口集团',src:'招投标公告',lv:'A 级存量',dm:'有预算意向',wd:'3-6 个月',hi:'老客新需求',ch:'仅执行层',amt:36,ind:'交通'},
+  {id:'L14',cust:'西北某市政局',src:'招投标公告',lv:'B 级存量',dm:'明确立项/有预算',wd:'3 个月内',hi:'新客户',ch:'仅执行层',amt:15,ind:'政务'},
+  {id:'L15',cust:'华东某研究院',src:'展会',lv:'A 级存量',dm:'明确立项/有预算',wd:'3-6 个月',hi:'存量复购',ch:'仅执行层',amt:31,ind:'科研院所'},
+  {id:'L16',cust:'华北某钢铁企业',src:'展会',lv:'S 级存量',dm:'有预算意向',wd:'6 个月以上',hi:'老客新需求',ch:'仅执行层',amt:57,ind:'制造'},
+  {id:'L17',cust:'西南某文旅集团',src:'官网留资',lv:'B 级存量',dm:'初步接触',wd:'3-6 个月',hi:'新客户',ch:'未触达',amt:13,ind:'文旅'},
+  {id:'L18',cust:'华南某数据中心',src:'展会',lv:'A 级存量',dm:'明确立项/有预算',wd:'3-6 个月',hi:'新客户',ch:'已触达决策人',amt:41,ind:'IDC'},
+  {id:'L19',cust:'华东某政务服务中心',src:'转介绍',lv:'S 级存量',dm:'有预算意向',wd:'3 个月内',hi:'老客新需求',ch:'仅执行层',amt:33,ind:'政务'},
+  {id:'L20',cust:'西北某矿业集团',src:'官网留资',lv:'B 级存量',dm:'有预算意向',wd:'6 个月以上',hi:'新客户',ch:'未触达',amt:24,ind:'能源电力'},
+  {id:'L21',cust:'华北某广电系统',src:'展会',lv:'A 级存量',dm:'初步接触',wd:'3-6 个月',hi:'老客新需求',ch:'未触达',amt:19,ind:'广电'},
+  {id:'L22',cust:'华东某银行总部',src:'官网留资',lv:'A 级存量',dm:'明确立项/有预算',wd:'6 个月以上',hi:'新客户',ch:'仅执行层',amt:83,ind:'金融'},
+  {id:'L23',cust:'西南某高职院校',src:'官网留资',lv:'B 级存量',dm:'有预算意向',wd:'3-6 个月',hi:'新客户',ch:'未触达',amt:10,ind:'教育'},
+  {id:'L24',cust:'华南某机场集团',src:'招投标公告',lv:'S 级存量',dm:'明确立项/有预算',wd:'3 个月内',hi:'存量复购',ch:'已触达决策人',amt:89,ind:'交通'}
+];
+
+/* ============ RFM 数据（虚构 · 客户 A-L） ============ */
+var RFM_CUST = [
+  {name:'客户 A',region:'华东',r:2,f:5,m:5,note:'预算冻结 · 二期推迟 → R 值下滑触发挽回流程'},
+  {name:'客户 B',region:'华南',r:2,f:4,m:5,note:'招标延期 → 保持触达，Q3 复评'},
+  {name:'客户 C',region:'华北',r:5,f:5,m:5,note:'标杆客户 · 年度联合方案优先排期'},
+  {name:'客户 D',region:'西南',r:4,f:2,m:2,note:'有近单但低频小额 → 试探性提频'},
+  {name:'客户 E',region:'华东',r:5,f:3,m:4,note:'金额高但频次低 → 交叉销售机会'},
+  {name:'客户 F',region:'西北',r:3,f:2,m:2,note:'沉默边缘 → 自动化培育池'},
+  {name:'客户 G',region:'华南',r:4,f:4,m:3,note:'活跃但金额中 → 提升项目规模'},
+  {name:'客户 H',region:'华北',r:2,f:2,m:2,note:'接近流失 → 低成本内容触达'},
+  {name:'客户 I',region:'华东',r:4,f:1,m:3,note:'单次大单客户 → 挖掘二期机会'},
+  {name:'客户 J',region:'华南',r:4,f:1,m:2,note:'新成交客户 → 建立复购节奏'},
+  {name:'客户 K',region:'华北',r:5,f:2,m:2,note:'近期成交 → 乘热推进二次需求'},
+  {name:'客户 L',region:'西南',r:5,f:4,m:4,note:'重要价值客户 · 专人维护'}
+];
+var RFM_RULE = [
+  {t:'重要价值客户',cond:'R≥4 · F≥4 · M≥4',act:'专人维护 + 年度联合方案优先排期',cls:'h'},
+  {t:'重要保持客户',cond:'R&lt;4 · F≥4 · M≥4',act:'触发挽回流程：决策链回访 + 流失预警',cls:'h'},
+  {t:'重要发展客户',cond:'R≥4 · F&lt;4 · M≥4',act:'交叉销售 / 提频：挖二期与关联项目',cls:'m'},
+  {t:'重要挽留客户',cond:'R&lt;4 · F&lt;4 · M≥4',act:'高层上门 + 让利策略，评估挽回价值',cls:'m'},
+  {t:'一般价值客户',cond:'R≥4 · F≥4 · M&lt;4',act:'观察培育，伺机扩大单项目规模',cls:'m'},
+  {t:'一般发展客户',cond:'R≥4 · F&lt;4 · M&lt;4',act:'挖掘复购节奏与二期机会',cls:'l'},
+  {t:'一般保持客户',cond:'R&lt;4 · F≥4 · M&lt;4',act:'低成本内容触达，防止滑向流失',cls:'l'},
+  {t:'一般挽留客户',cond:'R&lt;4 · F&lt;4 · M&lt;4',act:'自动化培育池，季度复评',cls:'l'}
+];
+
+/* ============ 评分计算 ============ */
+function scoreLead(l){
+  var s = 0, parts = [];
+  var keys = [['level','客户层级',l.lv],['demand','需求明确度',l.dm],['window','采购窗口期',l.wd],
+              ['history','历史合作',l.hi],['chain','决策链触达',l.ch],['source','线索来源',l.src]];
+  for(var i=0;i<keys.length;i++){
+    var k = keys[i][0], label = keys[i][1], val = keys[i][2];
+    var pts = SC[k].map[val]; s += pts;
+    parts.push({k:k,label:label,val:val,pts:pts,max:SC[k].max,why:SC[k].why});
+  }
+  return {total:s, parts:parts};
+}
+function tierOf(l){ return TIER(scoreLead(l).total); }
+
+/* ============ TAB1 渲染 ============ */
+var curFilter = 'all';
+function renderSum(){
+  var cnt = {h:0,m:0,l:0}, amt = {h:0,m:0,l:0};
+  for(var i=0;i<LEADS.length;i++){
+    var t = tierOf(LEADS[i]); cnt[t]++; amt[t]+=LEADS[i].amt;
+  }
+  var names = {h:'高意向（≥75 分）',m:'中意向（50-74 分）',l:'低意向（&lt;50 分）'};
+  var acts = {h:'24 小时内必触达',m:'周度培育',l:'自动化培育'};
+  var h = '';
+  ['h','m','l'].forEach(function(t){
+    h += '<div class="kpi"><div class="t">'+names[t]+'</div><div class="v">'+cnt[t]+' 条</div>'
+      +'<div class="d">预估 '+amt[t].toLocaleString('zh-CN')+' 万 · '+acts[t]+'</div></div>';
+  });
+  document.getElementById('sumKpi').innerHTML = h;
+}
+function renderFilters(){
+  var fs = [['all','全部 24 条'],['h','高意向'],['m','中意向'],['l','低意向']];
+  var h = '';
+  for(var i=0;i<fs.length;i++){
+    h += '<div class="fbtn'+(curFilter===fs[i][0]?' on':'')+'" onclick="setFilter(\''+fs[i][0]+'\')">'+fs[i][1]+'</div>';
+  }
+  document.getElementById('filters').innerHTML = h;
+}
+function setFilter(f){ curFilter=f; renderFilters(); renderLeads(); document.getElementById('leadDetail').innerHTML=''; }
+function renderLeads(){
+  var rows = [];
+  for(var i=0;i<LEADS.length;i++){
+    var l = LEADS[i], sc = scoreLead(l), t = sc.total, tier = TIER(t);
+    if(curFilter!=='all' && tier!==curFilter) continue;
+    rows.push({l:l,sc:sc,t:t,tier:tier});
+  }
+  rows.sort(function(a,b){ return b.t-a.t; });
+  var h = '';
+  for(var j=0;j<rows.length;j++){
+    var r = rows[j], l = r.l;
+    h += '<tr class="lrow" onclick="showLead(\''+l.id+'\')">'
+      +'<td><b>'+l.id+'</b></td>'
+      +'<td>'+l.cust+'<div style="font-size:10.5px;color:#8a94a6">'+l.ind+'</div></td>'
+      +'<td>'+l.src+'</td>'
+      +'<td class="num">'+l.amt+' 万</td>'
+      +'<td class="num"><span class="score" style="color:'+(r.tier==='h'?'#c0392b':(r.tier==='m'?'#b35900':'#666e78'))+'">'+r.t+'</span></td>'
+      +'<td><span class="tier '+r.tier+'">'+TIER_NAME[r.tier]+'</span></td>'
+      +'<td style="font-size:11.6px">'+TIER_ACT[r.tier]+'</td></tr>';
+  }
+  document.getElementById('leadBody').innerHTML = h;
+}
+function showLead(id){
+  var l = null;
+  for(var i=0;i<LEADS.length;i++) if(LEADS[i].id===id) l = LEADS[i];
+  var sc = scoreLead(l);
+  var h = '<div class="detail"><h3>'+l.id+' · '+l.cust+'　<span class="tier '+TIER(sc.total)+'">'+TIER_NAME[TIER(sc.total)]+' · '+sc.total+' 分</span></h3>'
+    +'<div class="why">预估采购 '+l.amt+' 万 · '+l.ind+' · 评分构成（每个因子可解释，销售看得懂才会用）：</div>';
+  for(var j=0;j<sc.parts.length;j++){
+    var p = sc.parts[j];
+    h += '<div class="fac"><span class="fn">'+p.label+'</span><span class="fv">'+p.val+'</span>'
+      +'<span class="ft"><span class="ff" style="width:'+(p.pts/p.max*100)+'%"></span></span>'
+      +'<span class="fs">'+p.pts+' / '+p.max+'</span></div>';
+  }
+  h += '<div class="why" style="margin-top:8px;font-size:11.4px;color:#8a94a6">权重设计依据：客户层级（25 分）&gt; 需求明确度与采购窗口期（各 20 分）——政企大单先看"是谁、有没有钱、什么时候花"，再看触达与来源。</div>';
+  h += '<div class="action"><b>建议动作：</b>'+TIER_ACT[TIER(sc.total)]+'。若 24 小时内未跟进，自动升级提醒至销售主管（人工兜底机制）。</div></div>';
+  document.getElementById('leadDetail').innerHTML = h;
+}
+
+/* ============ TAB2 渲染 ============ */
+function rfmTier(r,f,m){
+  if(m>=4){
+    if(r>=4&&f>=4) return ['重要价值客户','专人维护 + 年度联合方案'];
+    if(r<4&&f>=4)  return ['重要保持客户','决策链回访 + 流失预警挽回'];
+    if(r>=4&&f<4)  return ['重要发展客户','交叉销售 / 挖二期提频'];
+    return ['重要挽留客户','高层上门评估挽回价值'];
+  }
+  if(r>=4&&f>=4) return ['一般价值客户','观察培育，伺机扩大规模'];
+  if(r>=4)       return ['一般发展客户','挖掘复购节奏与二期机会'];
+  if(f>=4)       return ['一般保持客户','低成本内容触达防流失'];
+  return ['一般挽留客户','自动化培育池，季度复评'];
+}
+function renderRfm(){
+  var h = '', stat = {};
+  for(var i=0;i<RFM_CUST.length;i++){
+    var c = RFM_CUST[i], t = rfmTier(c.r,c.f,c.m);
+    stat[t[0]] = (stat[t[0]]||0)+1;
+    var hot = (c.name==='客户 A'||c.name==='客户 B');
+    h += '<tr'+(hot?' style="background:#fdf3f1"':'')+'>'
+      +'<td><b>'+c.name+'</b>'+(hot?' <span style="font-size:10px;color:#c0392b">← 归因 Demo 同款客户</span>':'')+'</td>'
+      +'<td>'+c.region+'</td>'
+      +'<td class="num">'+c.r+'</td><td class="num">'+c.f+'</td><td class="num">'+c.m+'</td>'
+      +'<td><span class="tier '+(t[0].indexOf('重要')===0?'h':(t[0].indexOf('保持')>=0||t[0].indexOf('挽留')>=0?'m':'l'))+'">'+t[0]+'</span></td>'
+      +'<td style="font-size:11.6px">'+c.note+'</td></tr>';
+  }
+  document.getElementById('rfmBody').innerHTML = h;
+  var order = ['重要价值客户','重要保持客户','重要发展客户','重要挽留客户','一般价值客户','一般发展客户','一般保持客户','一般挽留客户'];
+  var acts = {
+    '重要价值客户':'资源优先：专人维护，年度联合方案',
+    '重要保持客户':'立即挽回：决策链回访 + 预警机制',
+    '重要发展客户':'提频交叉：挖二期与关联项目',
+    '重要挽留客户':'评估价值：高层上门，必要时让利',
+    '一般价值客户':'观察培育，伺机扩大单产',
+    '一般发展客户':'建立复购节奏',
+    '一般保持客户':'低成本内容触达防流失',
+    '一般挽留客户':'自动化培育池，季度复评'
+  };
+  var s = '<table><thead><tr><th>分层</th><th class="num">客户数</th><th>资源投放策略</th></tr></thead><tbody>';
+  for(var k=0;k<order.length;k++){
+    if(!stat[order[k]]) continue;
+    s += '<tr><td><b>'+order[k]+'</b></td><td class="num">'+stat[order[k]]+'</td><td style="font-size:11.8px">'+acts[order[k]]+'</td></tr>';
+  }
+  s += '</tbody></table><div class="hint">结论：12 家存量客户中「重要价值 + 重要保持」共 4 家，占营收权重过半——这正是《营收异动归因分析 Demo》揭示的集中度风险来源。分层不是终点，分层后的资源差异化投放与预警联动才是。</div>';
+  document.getElementById('rfmSummary').innerHTML = s;
+}
+
+/* ============ Tab 切换 ============ */
+(function(){
+  var tabs = document.querySelectorAll('.tab');
+  for(var i=0;i<tabs.length;i++){
+    tabs[i].onclick = (function(n){
+      return function(){
+        var all = document.querySelectorAll('.tab');
+        for(var k=0;k<all.length;k++) all[k].className='tab';
+        n.className='tab on';
+        var ps = document.querySelectorAll('.pane');
+        for(var k=0;k<ps.length;k++) ps[k].className='pane';
+        document.getElementById(n.getAttribute('data-p')).className='pane on';
+      };
+    })(tabs[i]);
+  }
+})();
+
+renderSum(); renderFilters(); renderLeads(); renderRfm();
+</script>
+</body>
+</html>
