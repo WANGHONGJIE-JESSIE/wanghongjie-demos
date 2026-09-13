@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AI 线索评分与客户分层 Demo · 王宏杰</title>
+<html lang="zh-CN" data-page-node-id="ZgVxrmEE2qEbACw4wTAtFv">
+<head data-page-node-id="eBJ5vhrGrdNOoNd0Hq2jiW">
+<meta charset="UTF-8" data-page-node-id="fDFf1WWDV6vA7vcsFvtbdr">
+<meta name="viewport" content="width=device-width, initial-scale=1.0" data-page-node-id="hr1id5MR0SSEe1vBTJQ07y">
+<title>大客户 RFM-ABC 分层及复购分析 Demo · 王宏杰</title>
 <style>
   :root{
     --ink:#1a1d21; --ink-2:#3d434b; --ink-3:#666e78;
@@ -80,82 +80,82 @@
   @media (max-width:720px){.kpis{grid-template-columns:1fr;}.fac .fn{flex-basis:100px;}.fac .fv{flex-basis:100px;}.wrap{padding:22px 16px;}}
 </style>
 </head>
-<body>
-<div class="wrap">
-  <div class="crumb">◄ <a href="./index.html">返回作品集首页</a></div>
-  <h1>AI 线索评分与客户分层 Demo</h1>
-  <div class="sub">新线索进池 → 评分卡自动打分 → 高 / 中 / 低意向分层 → 自动分配跟进优先级。评分卡规则全部来自 19 年 B 端政企经验，可解释、可校准。数据为虚构示例，本地运行。</div>
-  <div class="badges">
-    <span class="badge">评分卡建模</span>
-    <span class="badge">可解释 · 非黑盒</span>
-    <span class="badge">RFM-ABC 分层</span>
-    <span class="badge">自动分配与提醒</span>
-    <span class="badge gray">CRM 对接示意</span>
-    <span class="badge gray">示例数据为虚构</span>
+<body data-page-node-id="V3UjSoxyBXtkh5OCP8J02H">
+<div class="wrap" data-page-node-id="2UahANkgDIHhVyidJGTVWV">
+  <div class="crumb" data-page-node-id="EQBzd0tQGzYhs4ELOfE58y">◄ <a href="./index.html" data-page-node-id="UM7xHaKdlZal2ajY0KqQKF">返回作品集首页</a></div>
+  <h1 data-page-node-id="6Vci3YQSPdKPj0V4Yq4T3U">大客户 RFM-ABC 分层及复购分析模型</h1>
+  <div class="sub" data-page-node-id="X9hXgCk1fqPSlDsMGxp0fg">复刻 <b>RFM（最近合作 / 合作频次 / 累计金额）+ ABC 价值分级</b> 客户分层模型，并搭建<b>复购识别规则</b>，输出分层运营与资源分配的落地建议。另含新线索评分卡（可解释、非黑盒）。数据为虚构示例，本地运行。</div>
+  <div class="badges" data-page-node-id="kl0JiBPDdn5ZvU4iJvAsoN">
+    <span class="badge" data-page-node-id="6OrCbZlA8mbVxHEMRpZTDW">RFM 三维建模</span>
+    <span class="badge" data-page-node-id="8Yv9S53GaPSjJqpgMoDdLm">可解释 · 非黑盒</span>
+    <span class="badge" data-page-node-id="JgVwypK6HjQdZ9cU2jwX9S">RFM-ABC 分层</span>
+    <span class="badge" data-page-node-id="V71k6GWgWqguILU4gZBRTu">自动分配与提醒</span>
+    <span class="badge gray" data-page-node-id="7ssHPFuNlDA8gVzahSoHBK">CRM 对接示意</span>
+    <span class="badge gray" data-page-node-id="ADirBdNZQSlV81xCAy09Bl">示例数据为虚构</span>
   </div>
-  <hr>
+  <hr data-page-node-id="trt1I1pqjC8jJzHfuxFkri">
 
-  <div class="tabs">
-    <div class="tab on" data-p="t1">① 线索评分与优先级</div>
-    <div class="tab" data-p="t2">② 存量客户 RFM 分层</div>
+  <div class="tabs" data-page-node-id="f482IHPQWm3d13nFwHYIAn">
+    <div class="tab on" data-p="t1" data-page-node-id="lCuEouFejeBS3xsvpOCflB">① 线索评分与优先级</div>
+    <div class="tab" data-p="t2" data-page-node-id="jD55A598H5dW6vndyNZJ2K">② 存量客户 RFM-ABC 分层与复购</div>
   </div>
 
   <!-- ============ TAB 1 线索评分 ============ -->
-  <div class="pane on" id="t1">
-    <div class="flow">
-      <span class="fnode">新线索进 CRM</span><span class="farr">→</span>
-      <span class="fnode">字段自动抓取</span><span class="farr">→</span>
-      <span class="fnode">评分卡打分（0-100）</span><span class="farr">→</span>
-      <span class="fnode">高/中/低分层</span><span class="farr">→</span>
-      <span class="fnode">自动分配 + 跟进提醒</span><span class="farr">→</span>
-      <span class="fnode">每月复评校准</span>
+  <div class="pane on" id="t1" data-page-node-id="OJP4lAfeX11NMS6Ty0anWv">
+    <div class="flow" data-page-node-id="gPPjcDEXsUFlC3DlyxTDry">
+      <span class="fnode" data-page-node-id="Qv7eTklgaHg19IrEnZutGw">新线索进 CRM</span><span class="farr" data-page-node-id="Gylw0P4dXks8raUOjKmJB6">→</span>
+      <span class="fnode" data-page-node-id="ro9val5MSP5Q97N4ugScMk">字段自动抓取</span><span class="farr" data-page-node-id="ZRkXVWgrsxFPktW6uWxO9t">→</span>
+      <span class="fnode" data-page-node-id="V5VxVtmEU1jhuikcClu7mv">评分卡打分（0-100）</span><span class="farr" data-page-node-id="TeXPFMVZ6LmlRFtsn0Nq3e">→</span>
+      <span class="fnode" data-page-node-id="Lfnz0HBCsdX7SKRzIVP9GJ">高/中/低分层</span><span class="farr" data-page-node-id="cqoLPH9pLnGScxOXBsiEbp">→</span>
+      <span class="fnode" data-page-node-id="lbWBx8Q2gXWEAg9YyrAWdB">自动分配 + 跟进提醒</span><span class="farr" data-page-node-id="EJqHr2ydKleQk8GXUFDBRc">→</span>
+      <span class="fnode" data-page-node-id="WAjVLXJBYSgMVWBWJGlvyw">每月复评校准</span>
     </div>
-    <div class="kpis" id="sumKpi"></div>
-    <div class="verdict">
-      <b>机制价值：</b>24 条线索不再靠销售"凭感觉"排序——<b>高意向 24 小时内必触达，低意向进自动化培育池不占人力</b>。
+    <div class="kpis" id="sumKpi" data-page-node-id="DsyHOi7yuS0JuV982K9g7y"></div>
+    <div class="verdict" data-page-node-id="eWJSTd1Oc5zhAiGmLmh9E4">
+      <b data-page-node-id="CjygJllMKd0okYRFPCYDEF">机制价值：</b>24 条线索不再靠销售"凭感觉"排序——<b data-page-node-id="W5vcHNSvX3Vx5tpwK7CnhS">高意向 24 小时内必触达，低意向进自动化培育池不占人力</b>。
       评分卡每个因子都有业务含义（见点击行详情），销售看得懂、才愿意用；每季度用实际转化数据回校权重。
     </div>
 
-    <div class="filters" id="filters"></div>
-    <table>
-      <thead><tr>
-        <th>线索</th><th>客户（脱敏）</th><th>来源</th><th class="num">预估金额</th><th class="num">得分</th><th>分层</th><th>建议动作</th>
+    <div class="filters" id="filters" data-page-node-id="sWyfhEvlh7LbPJx6EXnqxx"></div>
+    <table data-page-node-id="l4MO32jtHpiva7TgEFtVdn">
+      <thead data-page-node-id="oySyg8Ng4Zuh2ZCisbWpZf"><tr data-page-node-id="ibAm8qDtR47XoEmK7TmumW">
+        <th data-page-node-id="i2EjMOhqTzn6qU2n1wjOML">线索</th><th data-page-node-id="IML8HFjl5Zh5U7SFYvGfOJ">客户（脱敏）</th><th data-page-node-id="msBKidwfOP2sPPHe0NMnHb">来源</th><th class="num" data-page-node-id="KFWKjWllL2eFOXsLeTLw4O">预估金额</th><th class="num" data-page-node-id="GDo8joiTPgKYBvHhWEeF4F">得分</th><th data-page-node-id="G6ofFcDHtVc3eTcc6KBJbi">分层</th><th data-page-node-id="Mc5C3ZgKHJiEpUZv80RoDJ">建议动作</th>
       </tr></thead>
-      <tbody id="leadBody"></tbody>
+      <tbody id="leadBody" data-page-node-id="85F6a4uNv0f2GpzJfcD57T"></tbody>
     </table>
-    <div class="hint">点击任意行查看评分明细（每个因子拿了多少分、为什么）。</div>
-    <div id="leadDetail"></div>
+    <div class="hint" data-page-node-id="35ezHUIuCR2CqMZSry0aCU">点击任意行查看评分明细（每个因子拿了多少分、为什么）。</div>
+    <div id="leadDetail" data-page-node-id="nQskcVJznOaY8jahf7dWKW"></div>
   </div>
 
   <!-- ============ TAB 2 RFM 分层 ============ -->
-  <div class="pane" id="t2">
-    <div class="verdict">
-      <b>存量客户分层逻辑：</b>R 最近成交（1-5）× F 成交频次（1-5）× M 成交金额（1-5），
-      八象限分层后匹配差异化动作——<b>资源投向"重要价值"，挽回动作盯"重要保持"，其余走低成本培育</b>。
+  <div class="pane" id="t2" data-page-node-id="vaUawZJwTsHOIQlS4HZ4VY">
+    <div class="verdict" data-page-node-id="VupNdLVYNmIUr5JvcNzLHQ">
+      <b data-page-node-id="pV936X4vhRDKCFVdmjsnD5">存量客户分层逻辑：</b>R 最近成交（1-5）× F 成交频次（1-5）× M 成交金额（1-5），
+      八象限分层后匹配差异化动作——<b data-page-node-id="RdbTzlrTrBeoYFYrRAPfjC">资源投向"重要价值"，挽回动作盯"重要保持"，其余走低成本培育</b>。
       与线索评分共用同一套世界观：客户 A、B 正是《营收异动归因分析 Demo》中下滑的两大客户——R 值掉到 2 后自动从"重要价值"降为"重要保持"，触发挽回流程。
     </div>
-    <table>
-      <thead><tr>
-        <th>客户</th><th>区域</th><th class="num">R 最近成交</th><th class="num">F 频次</th><th class="num">M 金额</th><th>分层结果</th><th>建议动作</th>
+    <table data-page-node-id="BMioOBb3rH4nV3PTQ13weg">
+      <thead data-page-node-id="0rIamVvn1nB8BJGB7wyRGp"><tr data-page-node-id="hQpg9KgBIhhIn6iDdQfOKU">
+        <th data-page-node-id="DazFiPwSrKTvJfCQa9G3sq">客户</th><th data-page-node-id="L4JDRZrMcCGeGqQTNbU5L1">区域</th><th class="num" data-page-node-id="T4bRYVHr8H86jsni10gsVZ">R 最近成交</th><th class="num" data-page-node-id="SxSkJCStpUQeswV0spNIzZ">F 频次</th><th class="num" data-page-node-id="8NCdyp3f1noLwAuCftOM6X">M 金额</th><th data-page-node-id="A7xrJDimDJmHkVcJsWIFHu">分层结果</th><th data-page-node-id="OSux0UYjimNsLKaug10sGG">建议动作</th>
       </tr></thead>
-      <tbody id="rfmBody"></tbody>
+      <tbody id="rfmBody" data-page-node-id="aHoes10zQgibSCtQCPvooX"></tbody>
     </table>
-    <h3 class="sec">分层统计与资源投放建议</h3>
-    <div id="rfmSummary"></div>
+    <h3 class="sec" data-page-node-id="6HCJu6edPAFhKuMz2uQ27e">分层统计与资源投放建议</h3>
+    <div id="rfmSummary" data-page-node-id="yXW8cF7B7BbQkiGyeespZl"></div>
   </div>
 
-  <div class="redlines">
-    <b>落地红线（真实项目中）</b>：① <b>可解释优先</b>——用透明评分卡而非黑盒模型，销售能看懂每个因子，不信任 = 不使用；② <b>人工兜底</b>——高分线索 24 小时未跟进自动升级提醒到主管，AI 只做排序不做决策；③ <b>季度校准</b>——用实际赢单数据回测各因子权重，行业采购周期变了，权重就要变。
+  <div class="redlines" data-page-node-id="xkAESt5Xy9AMwNdMxPN1uG">
+    <b data-page-node-id="54FepOSokT1xF3zOZrcJb4">落地红线（真实项目中）</b>：① <b data-page-node-id="lse6DQGrIxEUMrJFFk6bRJ">可解释优先</b>——用透明评分卡而非黑盒模型，销售能看懂每个因子，不信任 = 不使用；② <b data-page-node-id="Bw9IR2nFB6QTOxSgsXulFd">人工兜底</b>——高分线索 24 小时未跟进自动升级提醒到主管，AI 只做排序不做决策；③ <b data-page-node-id="WQ5VrflPfBCi9A12OHmFw2">季度校准</b>——用实际赢单数据回测各因子权重，行业采购周期变了，权重就要变。
   </div>
 
-  <div class="method">
-    <b>设计思路：为什么用可解释评分卡，而不是黑盒模型</b><br>
-    评分卡的价值不取决于模型精度，取决于<b>销售用不用</b>。看不懂的规则不会被采纳，所以每个因子都必须能说出业务含义与权重依据（点击任意线索可查看该条线索的评分明细）。
-    <br><b>权重来源</b>：19 年 B 端政企项目的真实输单与赢单经验——政企客户「采购窗口期」权重高于「留资活跃度」，央企「预算冻结」前通常有可识别的公开信号。AI 落地的瓶颈从来不是算法，是业务规则能否沉淀成代码。
-    <br><b>给使用方的建议</b>：本套权重按政企大单场景校准，换行业必须重新校准——用近 12 个月实际赢单数据回测各因子区分度，把区分度低的因子替换掉再上线，并保留季度回校机制（采购周期变了，权重就要跟着变）。
+  <div class="method" data-page-node-id="7xLIFLiI32wEPrkFM4MpCx">
+    <b data-page-node-id="C54pKbEd6JxCQFAoO7hKMt">设计思路：为什么用可解释评分卡，而不是黑盒模型</b><br data-page-node-id="h5rLPU3EH7ZHbPFVI3ptvc">
+    评分卡的价值不取决于模型精度，取决于<b data-page-node-id="iiEjpJNXMVxIlSE7xB6vJD">销售用不用</b>。看不懂的规则不会被采纳，所以每个因子都必须能说出业务含义与权重依据（点击任意线索可查看该条线索的评分明细）。
+    <br data-page-node-id="oQRSv7uaMOrmG9qH9EKdBK"><b data-page-node-id="GVFn2JmEbwdB815NQmDQkC">权重来源</b>：19 年 B 端政企项目的真实输单与赢单经验——政企客户「采购窗口期」权重高于「留资活跃度」，央企「预算冻结」前通常有可识别的公开信号。AI 落地的瓶颈从来不是算法，是业务规则能否沉淀成代码。
+    <br data-page-node-id="rUN9mQHj3wn4qB1BQWGGpY"><b data-page-node-id="P5AX7conEnXXLbg3UgTdcd">给使用方的建议</b>：本套权重按政企大单场景校准，换行业必须重新校准——用近 12 个月实际赢单数据回测各因子区分度，把区分度低的因子替换掉再上线，并保留季度回校机制（采购周期变了，权重就要跟着变）。
   </div>
 
-  <div class="note">本 Demo 在浏览器本地运行，无任何网络请求。数据为脱敏虚构样例（与其他 Demo 同一世界观：五大区域 / 客户 A-L / 三条产品线）。真实落地版对接企业 CRM（纷享销客 / 销售易 / Salesforce），字段自动同步、评分每日刷新。联系方式：189 1098 9990 · 272702947@qq.com</div>
+  <div class="note" data-page-node-id="DkWSZzQXG6xtE1bfd9N00u">本 Demo 在浏览器本地运行，无任何网络请求。数据为脱敏虚构样例（与其他 Demo 同一世界观：五大区域 / 客户 A-L / 三条产品线）。真实落地版对接企业 CRM（纷享销客 / 销售易 / Salesforce），字段自动同步、评分每日刷新。</div>
 </div>
 
 <script>

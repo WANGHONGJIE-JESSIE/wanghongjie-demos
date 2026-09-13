@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>能源项目报价 · 利润 · 中标概率评估 Demo · 王宏杰</title>
+<style>
+  :root{
+    --ink:#1a1d21; --ink-2:#3d434b; --ink-3:#666e78;
+    --line:#dfe3e8; --accent:#1f4e79; --accent-soft:#eaf1f8;
+    --bg:#fff; --tag:#f2f5f8; --ok:#1a7f4e; --warn:#b35900; --bad:#c0392b; --teal:#0e7a8a;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:"PingFang SC","Microsoft YaHei","Segoe UI",sans-serif;color:var(--ink);background:#eceff2;line-height:1.65;padding:24px 12px;}
+  .wrap{max-width:980px;margin:0 auto;background:var(--bg);padding:34px 38px 30px;box-shadow:0 2px 18px rgba(20,30,45,.10);}
+  .crumb{font-size:11.5px;color:var(--ink-3);margin-bottom:10px;}
+  .crumb a{color:var(--accent);text-decoration:none;}
+  h1{font-size:21px;color:var(--ink);}
+  .sub{font-size:12.5px;color:var(--ink-3);margin-top:4px;}
+  .badges{margin:10px 0 4px;display:flex;flex-wrap:wrap;gap:6px;}
+  .badge{font-size:10.8px;padding:2px 8px;border-radius:10px;background:var(--accent-soft);color:var(--accent);border:1px solid #cfe0ee;font-weight:600;}
+  .badge.gray{background:var(--tag);color:var(--ink-3);border-color:var(--line);}
+  hr{border:none;border-top:1px solid var(--line);margin:16px 0;}
+
+  .steps-nav{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px;}
+  .snav{font-size:12.3px;font-weight:600;padding:7px 13px;border-radius:6px;border:1px solid var(--line);
+        background:var(--tag);color:var(--ink-2);cursor:pointer;}
+  .snav:hover{border-color:var(--accent);color:var(--accent);}
+  .snav.on{background:var(--accent);color:#fff;border-color:var(--accent);}
+  .panel{display:none;}
+  .panel.on{display:block;}
+
+  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px;}
+  .kpi{border:1px solid var(--line);border-radius:7px;padding:10px 12px;background:#fbfcfd;}
+  .kpi .t{font-size:11px;color:var(--ink-3);}
+  .kpi .v{font-size:19px;font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums;margin-top:2px;}
+  .kpi .d{font-size:11px;margin-top:2px;}
+  .up{color:var(--bad);} .dn{color:var(--bad);} .good{color:var(--ok);}
+  .verdict{border-radius:6px;padding:10px 14px;font-size:12.6px;margin-bottom:14px;border-left:3px solid var(--accent);background:var(--accent-soft);color:#12395c;line-height:1.8;}
+  .verdict b{color:#0d2b48;}
+  .verdict.warn{border-left-color:var(--warn);background:#fdf6ec;color:#6b5312;}
+  .verdict.warn b{color:#8a6a1a;}
+
+  h3{font-size:14px;color:var(--ink);margin:14px 0 8px;}
+  .hint{font-size:11.8px;color:var(--ink-3);margin-bottom:10px;}
+  svg text{font-family:"PingFang SC","Microsoft YaHei",sans-serif;}
+
+  table{border-collapse:collapse;width:100%;font-size:12.3px;margin-bottom:12px;}
+  th{background:var(--accent);color:#fff;font-weight:600;padding:6px 10px;text-align:left;white-space:nowrap;}
+  td{padding:6px 10px;border-bottom:1px solid var(--line);color:var(--ink-2);}
+  tr:nth-child(even) td{background:#f7f9fb;}
+  td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;}
+  .prow{cursor:pointer;}
+  .prow:hover td{background:#eef4fa;}
+  .prow.sel td{background:var(--accent-soft);font-weight:600;}
+  .chip{display:inline-block;font-size:11px;font-weight:700;border-radius:10px;padding:1px 9px;}
+  .chip.bad{background:#fdf0ee;color:var(--bad);}
+  .chip.good{background:#e9f6ef;color:var(--ok);}
+  .chip.warn{background:#fdf6ec;color:var(--warn);}
+  .chip.gray{background:var(--tag);color:var(--ink-3);}
+
+  /* 6 维度条 */
+  .dims{margin-bottom:12px;}
+  .dim{display:grid;grid-template-columns:110px 1fr 62px 46px;align-items:center;gap:8px;margin-bottom:6px;font-size:12.2px;}
+  .dim .dname{color:var(--ink-2);}
+  .dbar{height:14px;background:#eef1f4;border-radius:3px;overflow:hidden;}
+  .dbar i{display:block;height:100%;background:linear-gradient(90deg,#2b6ca3,#1f4e79);border-radius:3px;}
+  .dim .dval{text-align:right;font-variant-numeric:tabular-nums;color:var(--ink);font-weight:700;}
+  .dim .dw{text-align:right;font-size:11px;color:var(--ink-3);}
+
+  /* 滑块 */
+  .ctrls{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:6px 0 14px;}
+  .ctrl{border:1px solid var(--line);border-radius:7px;padding:12px 14px;background:#fbfcfd;}
+  .ctrl .lb{font-size:12px;color:var(--ink-2);display:flex;justify-content:space-between;}
+  .ctrl .lb b{color:var(--accent);font-variant-numeric:tabular-nums;}
+  .ctrl input[type=range]{width:100%;margin-top:8px;accent-color:#1f4e79;}
+  .ctrl .sc{font-size:10.8px;color:var(--ink-3);display:flex;justify-content:space-between;margin-top:2px;}
+
+  .out{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:12px;}
+  .out .kpi .v{font-size:18px;}
+  .flag{border-radius:6px;padding:8px 14px;font-size:12.3px;margin-bottom:12px;}
+  .flag.pass{background:#e9f6ef;color:#14613c;border-left:3px solid var(--ok);}
+  .flag.fail{background:#fdf0ee;color:#8f2c20;border-left:3px solid var(--bad);}
+
+  .concl{background:linear-gradient(180deg,#f3f8fd,#eef4fb);border:1px solid #d3e2f2;border-radius:8px;padding:14px 18px;font-size:12.8px;line-height:2.0;color:#22384f;margin-bottom:14px;}
+  .concl b{color:#0d2b48;}
+  .duo{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;}
+  .cause{border:1px solid #ecd5d1;border-left:3px solid var(--bad);border-radius:7px;padding:12px 14px;background:#fdf8f7;font-size:12.4px;color:var(--ink-2);line-height:1.85;}
+  .cause b{color:var(--ink);}
+
+  .redlines{margin-top:18px;background:#fdf6ec;border:1px solid #ecd9b0;border-radius:6px;padding:10px 14px;font-size:12px;color:#6b5312;line-height:1.9;}
+  .redlines b{color:#8a6a1a;}
+  .method{margin-top:10px;background:#eef3fa;border:1px solid #cfdff0;border-radius:6px;padding:10px 14px;font-size:12px;color:#22384f;line-height:1.9;}
+  .method b{color:#0d2b48;}
+  .note{font-size:11.8px;color:var(--ink-3);border-top:1px dashed var(--line);padding-top:10px;margin-top:14px;}
+  .disc{margin-top:10px;background:#f7f9fb;border:1px dashed var(--line);border-radius:6px;padding:9px 14px;font-size:11.6px;color:var(--ink-3);line-height:1.85;}
+  @media (max-width:720px){.kpis,.out{grid-template-columns:1fr 1fr;}.ctrls,.duo{grid-template-columns:1fr;}.wrap{padding:22px 16px;}.dim{grid-template-columns:92px 1fr 52px 40px;}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="crumb">◄ <a href="./index.html">返回作品集首页</a></div>
+  <h1>能源项目报价 · 利润 · 中标概率评估模型</h1>
+  <div class="sub">复刻大型能源集采项目的多维度评估：6 维度打分 → 逻辑回归中标概率 → 报价与毛利率测算 → 三情景模拟 → 项目优先级排序。原模型为 Excel 建模内核 + Power BI 呈现，此处以网页形式复刻其交互逻辑。</div>
+  <div class="badges">
+    <span class="badge">6 维度评估框架</span>
+    <span class="badge">逻辑回归中标概率</span>
+    <span class="badge">成本结构拆解</span>
+    <span class="badge">多情景模拟</span>
+    <span class="badge">期望毛利排序</span>
+    <span class="badge gray">滑块可调 · 实时联动</span>
+    <span class="badge gray">示例数据为虚构</span>
+  </div>
+  <hr>
+
+  <div class="steps-nav" id="nav">
+    <div class="snav on" data-p="p1">① 项目池总览</div>
+    <div class="snav" data-p="p2">② 6 维度评分</div>
+    <div class="snav" data-p="p3">③ 报价与利润测算</div>
+    <div class="snav" data-p="p4">④ 三情景模拟</div>
+    <div class="snav" data-p="p5">⑤ 决策输出</div>
+  </div>
+
+  <!-- ============ P1 项目池 ============ -->
+  <div class="panel on" id="p1">
+    <div class="kpis" id="kpiPool"></div>
+    <div class="verdict">
+      <b>结论 ①：</b>在跟 6 个能源集采项目合计规模 <b>7,810 万</b>，但<b>不能按规模排优先级</b>——规模最大的 P1（2,800 万）期望毛利 477 万；
+      规模相近的 P5（1,200 万）因历史中标率仅 30%，期望毛利掉到 131 万；而规模最小的 P4（420 万）胜率高达 83%，绝对额却只有 67 万。
+      排序口径统一为 <b>期望毛利额 = 报价 × 毛利率 × 中标概率</b>，把"能不能赢"和"赢了赚多少"放进同一个数里比。
+    </div>
+    <h3>在跟项目池（点击任意行切换分析对象）</h3>
+    <table>
+      <thead><tr>
+        <th>项目</th><th class="num">规模(万)</th><th class="num">加权分</th><th class="num">中标概率</th><th class="num">基准毛利率</th><th class="num">期望毛利(万)</th><th>优先级</th>
+      </tr></thead>
+      <tbody id="poolBody"></tbody>
+    </table>
+    <div class="hint">「加权分」= 6 维度加权得分（0-100）；「中标概率」由逻辑回归把加权分映射为概率。两者都在 ② 里可查到明细与权重。</div>
+  </div>
+
+  <!-- ============ P2 6 维度评分 ============ -->
+  <div class="panel" id="p2">
+    <div class="verdict">
+      <b>结论 ②：</b>当前项目 <b id="p2name">—</b> 加权得分 <b id="p2score">—</b>，对应中标概率 <b id="p2prob">—</b>。
+      6 个维度正交不重叠：<b>竞争态势</b>（对手是谁、历史交手胜负）与<b>关系成熟度</b>（决策链渗透深度、历史合作次数）是两件事——前者管"能不能打赢对手"，后者管"有没有人在里面帮你"。
+    </div>
+    <h3>6 维度评分与权重</h3>
+    <div class="dims" id="dimBox"></div>
+    <div class="duo">
+      <div class="cause" style="border-color:#cfdff0;border-left-color:var(--accent);background:#f4f8fc">
+        <b>概率映射（逻辑回归）</b><br>
+        z =（加权分 − 55）/ 9　→　P = 1 /（1 + e<sup>−z</sup>）<br>
+        <span style="font-size:11.6px;color:var(--ink-3)">含义：加权分 55 分对应 50% 基准线，每 ±9 分概率约翻一倍 / 减半。系数来自历史投标样本拟合，本 Demo 为示意值。</span>
+      </div>
+      <div class="cause" style="border-color:#ecd9b0;border-left-color:var(--warn);background:#fdfaf3">
+        <b>维度边界（避免重复计分）</b><br>
+        项目规模 / 客户属性 = 客观画像；竞争态势 = 外部对手；历史中标率 = 我方在该客户的胜率；关系成熟度 = 决策链渗透；标书技术匹配 = 本次应答质量。<br>
+        <span style="font-size:11.6px;color:var(--ink-3)">早期版本曾用"报价竞争力"，与"竞争态势"重复计分，已替换为"关系成熟度"。</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ P3 报价与利润测算 ============ -->
+  <div class="panel" id="p3">
+    <div class="verdict warn">
+      <b>结论 ③：</b>报价不是"成本加个点"——<b>报价越高，中标概率越低</b>。本模型把价格弹性写进概率：报价系数每上浮 1 个百分点，中标概率约下降 4%（下浮同理上升）。
+      所以真正要最大化的是 <b>期望毛利额</b>，不是毛利率。
+    </div>
+    <h3>成本结构（当前项目 · 占总成本比）</h3>
+    <table>
+      <thead><tr><th>成本项</th><th class="num">占比</th><th>说明</th></tr></thead>
+      <tbody>
+        <tr><td>设备与材料</td><td class="num">68.0%</td><td>集采价 + 供应商返点（规模越大议价空间越大）</td></tr>
+        <tr><td>施工与交付</td><td class="num">14.0%</td><td>含安装、调试、验收配合；外协部分按区域单价测算</td></tr>
+        <tr><td>质保与备件</td><td class="num">3.0%</td><td>按质保年限计提，2 年 / 3 年 / 5 年三档</td></tr>
+        <tr><td>期间费用分摊</td><td class="num">9.0%</td><td>售前、投标、管理工时按项目规模分摊</td></tr>
+        <tr><td>税费及附加</td><td class="num">6.0%</td><td>增值税及附加按行业口径折算</td></tr>
+      </tbody>
+    </table>
+
+    <div class="ctrls">
+      <div class="ctrl">
+        <div class="lb"><span>报价系数（相对基准成本）</span><b id="mkVal">1.25</b></div>
+        <input type="range" id="mk" min="105" max="145" step="1" value="125">
+        <div class="sc"><span>1.05 低价抢标</span><span>1.25 基准</span><span>1.45 高毛利</span></div>
+      </div>
+      <div class="ctrl">
+        <div class="lb"><span>风险准备金计提</span><b id="rsVal">1.0%</b></div>
+        <input type="range" id="rs" min="0" max="40" step="1" value="10">
+        <div class="sc"><span>0%</span><span>2%</span><span>4%</span></div>
+      </div>
+    </div>
+
+    <div class="out" id="outBox"></div>
+    <div id="gpFlag"></div>
+
+    <h3>报价弹性测算（报价系数 → 中标概率 → 期望毛利）</h3>
+    <svg viewBox="0 0 680 260" style="width:100%;max-width:680px;display:block;margin:0 auto 6px;">
+      <line x1="46" y1="210" x2="650" y2="210" stroke="#c6d3e0" stroke-width="1"/>
+      <line x1="46" y1="20" x2="46" y2="210" stroke="#c6d3e0" stroke-width="1"/>
+      <text x="40" y="24" text-anchor="end" font-size="10" fill="#8a94a6">高</text>
+      <text x="40" y="212" text-anchor="end" font-size="10" fill="#8a94a6">0</text>
+      <!-- 毛利率曲线（单调上升） -->
+      <polyline id="curveGm" fill="none" stroke="#0e7a8a" stroke-width="2"/>
+      <!-- 中标概率曲线（单调下降） -->
+      <polyline id="curveP" fill="none" stroke="#c0392b" stroke-width="2"/>
+      <!-- 期望毛利曲线（抛物线） -->
+      <polyline id="curveEv" fill="none" stroke="#1f4e79" stroke-width="3"/>
+      <circle id="dotNow" r="5" fill="#1f4e79"/>
+      <text x="120" y="236" text-anchor="middle" font-size="11" fill="#0e7a8a">毛利率</text>
+      <text x="240" y="236" text-anchor="middle" font-size="11" fill="#c0392b">中标概率</text>
+      <text x="360" y="236" text-anchor="middle" font-size="11" fill="#1f4e79">期望毛利额（最大值为最优报价）</text>
+      <text x="120" y="252" text-anchor="middle" font-size="10.5" fill="#8a94a6">报价系数 1.05</text>
+      <text x="550" y="252" text-anchor="middle" font-size="10.5" fill="#8a94a6">1.45</text>
+    </svg>
+    <div class="hint" id="bestHint"></div>
+  </div>
+
+  <!-- ============ P4 三情景 ============ -->
+  <div class="panel" id="p4">
+    <div class="verdict">
+      <b>结论 ④：</b>同一个项目三种报价策略，<b>盲目低价不是最优</b>。低价抢标把毛利率压到 12% 附近，概率虽升但期望毛利反而下降；
+      高价策略毛利率好看但概率掉得更快。真正的决策依据是<b>期望毛利额最大的那一档</b>，再叠加毛利率底线做合规校验。
+    </div>
+    <h3>三情景模拟（当前项目）</h3>
+    <table>
+      <thead><tr>
+        <th>情景</th><th class="num">报价系数</th><th class="num">报价(万)</th><th class="num">毛利率</th><th class="num">中标概率</th><th class="num">期望毛利(万)</th><th>适用判断</th>
+      </tr></thead>
+      <tbody id="scBody"></tbody>
+    </table>
+    <div class="concl" id="scConcl"></div>
+    <h3>为什么"低价抢标"常常是错的</h3>
+    <div class="hint">
+      ① <b>概率上升有天花板</b>：中标概率最高只能接近 1，但毛利率可以被压到 0——分子分母不对称；<br>
+      ② <b>低价中标的项目会占用交付资源</b>，挤掉高毛利项目的产能，机会成本不在公式里但真实存在；<br>
+      ③ <b>低价会被客户记进历史价</b>，下一次同类项目的报价天花板被自己压低（这也是"历史中标率"维度要单独看的原因）。
+    </div>
+  </div>
+
+  <!-- ============ P5 决策输出 ============ -->
+  <div class="panel" id="p5">
+    <h3>一页纸决策（管理层视角）</h3>
+    <div class="concl" id="conclBox"></div>
+    <h3>行动建议（可执行 · 带责任与时限）</h3>
+    <table>
+      <thead><tr><th>#</th><th>行动</th><th style="width:110px">责任方</th><th style="width:80px">时限</th><th style="width:180px">预期效果</th></tr></thead>
+      <tbody id="actBody"></tbody>
+    </table>
+
+    <div class="redlines">
+      <b>投标测算红线（真实项目中）</b>：① <b>毛利率底线是硬约束</b>——任何低于公司底线的报价必须走例外审批，不能由一线自行决定；② <b>成本口径要锁定</b>——设备 / 施工 / 质保 / 期间费用 / 税费五项口径统一后再算，避免"五个人算五个毛利率"；③ <b>概率是概率不是保证</b>——模型输出用于排序和资源配置，不用于承诺业绩；④ <b>输单必须归因</b>——每个丢标项目回填输单原因，反哺"历史中标率"维度的下一次评分。
+    </div>
+
+    <div class="method">
+      <b>方法论复用：换行业不改结构</b><br>
+      本模型以能源集采为例，但骨架不绑定行业——6 维度中只有<b>「客户属性 / 竞争态势 / 历史中标率」三项需要按行业重新定义取值规则</b>，其余（规模、关系成熟度、标书技术匹配）通用。
+      换到 SaaS 项目就把"设备成本"换成"云资源 + 实施工时"，把"招投标公告"换成"采购需求与竞品报价"，测算逻辑完全不变。<br>
+      <b>给使用方的建议</b>：模型最大的价值不是算出那个概率数字，而是<b>逼着团队把"凭感觉报的价"拆成六个可讨论的维度</b>——一旦拆开，分歧就从"我觉得能中"变成"我们在关系成熟度上确实弱于对手，要不要先补一次技术交流"。
+    </div>
+  </div>
+
+  <div class="disc">
+    <b>数据说明</b>：本 Demo 为<b>业务分析模型的复刻演示</b>，项目、客户、金额、评分均为虚构样例（与经营驾驶舱、营收异动归因、RFM-ABC 分层 Demo 同一虚构世界观），不含任何真实企业、报价与成本信息；系数与权重为示意值，真实落地需用企业自身历史投标样本重新拟合。
+  </div>
+  <div class="note">本 Demo 在浏览器本地运行，无任何网络请求、不采集任何数据。原模型交付形态：Excel（成本结构与测算内核）+ Power BI（项目池视图与优先级看板）。</div>
+</div>
+
+<script>
+/* ================= 项目数据（虚构样例） ================= */
+var DIM_NAMES = ['项目规模','客户属性','竞争态势','历史中标率','关系成熟度','标书技术匹配'];
+var DIM_W     = [0.20, 0.15, 0.20, 0.20, 0.15, 0.10];
+var DIM_KEYS  = ['scale','cust','comp','hist','rel','tech'];
+var DIM_DESC  = [
+  '预算规模 / 单项目毛利贡献度（越大越值得投资源）',
+  '客户层级 / 付款能力 / 采购规范度（S/A/B 级 + 信用）',
+  '对手数量 / 历史交手胜负 / 友商本次策略',
+  '我方在该客户同类项目的历史胜率',
+  '决策链渗透深度 / 历史合作次数 / 关键人支持度',
+  '本次标书应答与技术条款匹配度'
+];
+
+var PROJECTS = [
+  {id:'P1', name:'华能某电厂 · 全厂智能照明集采', base:2800, dims:[96,90,45,72,58,88], risk:'中高', owner:'能源事业部', note:'规模最大但竞争激烈，两家友商已提前介入'},
+  {id:'P2', name:'国网某省公司 · 变电站智能辅助系统', base:1650, dims:[82,92,60,80,75,85], risk:'中',   owner:'能源事业部', note:'客户规范度高、我方历史胜率好，最优标的'},
+  {id:'P3', name:'中石化某基地 · 节能改造（EMC）',   base:980,  dims:[70,85,68,55,48,78], risk:'中高', owner:'能源事业部', note:'关系成熟度偏弱，需补技术交流'},
+  {id:'P4', name:'某设计院 · 科研楼显示系统',        base:420,  dims:[46,70,78,62,82,90], risk:'低',   owner:'政企事业部', note:'规模小但胜率高，作为产能填谷项目'},
+  {id:'P5', name:'地方城投 · 智慧路灯 EMC',          base:1200, dims:[74,62,72,30,40,70], risk:'高',   owner:'政企事业部', note:'历史中标率仅 30%，付款周期长，谨慎'},
+  {id:'P6', name:'华电某风场 · 集控大屏与可视化',    base:760,  dims:[62,80,66,66,70,80], risk:'中',   owner:'能源事业部', note:'技术匹配度高，可作为标杆案例'}
+];
+
+var BASE_MARKUP = 1.25;   // 基准报价系数
+var BASE_RESERVE = 0.01;  // 基准风险准备金
+var GP_FLOOR = 0.18;      // 公司毛利率底线 18%
+
+var curIdx = 0, markup = 1.25, reserve = 0.01;
+
+/* ---------- 计算内核 ---------- */
+function wScore(p){
+  var s = 0;
+  for(var i=0;i<6;i++) s += p.dims[i]*DIM_W[i];
+  return s;
+}
+function logistic(score){ return 1/(1+Math.exp(-(score-55)/9)); }
+function priceAdj(mk){    // 相对基准报价系数的价格弹性
+  var d = (mk-BASE_MARKUP)*100;
+  return Math.exp(-0.04*d);
+}
+function calc(p, mk, rs){
+  var cost  = p.base / BASE_MARKUP;              // 基准成本（项目规模 = 基准报价）
+  var quote = cost * mk;                         // 报价 = 成本 × 报价系数
+  var cost2 = cost * (1 + rs);                   // 计提风险准备金后成本
+  var gp    = (quote - cost2) / quote;           // 毛利率
+  var prob  = logistic(wScore(p)) * priceAdj(mk);
+  if(prob > 0.96) prob = 0.96;
+  if(prob < 0.02) prob = 0.02;
+  var ev    = quote * gp * prob;                 // 期望毛利额
+  return {quote:quote, cost:cost2, gp:gp, prob:prob, ev:ev};
+}
+function fmt(n, d){ return n.toFixed(d===undefined?0:d); }
+function pct(n, d){ return (n*100).toFixed(d===undefined?1:d)+'%'; }
+
+/* ---------- P1 项目池 ---------- */
+function renderPool(sel){
+  var rows='', sumBase=0, sumEv=0, wProb=0;
+  var list = PROJECTS.map(function(p,i){
+    var c = calc(p, BASE_MARKUP, BASE_RESERVE);
+    return {p:p, i:i, c:c};
+  });
+  list.sort(function(a,b){ return b.c.ev - a.c.ev; });
+  for(var k=0;k<list.length;k++){
+    var it = list[k];
+    sumBase += it.p.base; sumEv += it.c.ev; wProb += it.c.prob;
+    var rank = k+1;
+    var chip = rank<=2 ? '<span class="chip good">P'+rank+' 主攻</span>'
+             : rank<=4 ? '<span class="chip warn">P'+rank+' 维持</span>'
+             : '<span class="chip gray">P'+rank+' 观察</span>';
+    rows += '<tr class="prow'+(it.i===sel?' sel':'')+'" onclick="pick('+it.i+')">'
+      + '<td><b>'+it.p.id+'　'+it.p.name+'</b><br><span style="font-size:10.5px;color:#8a94a6">'+it.p.note+'</span></td>'
+      + '<td class="num">'+fmt(it.p.base)+'</td>'
+      + '<td class="num">'+wScore(it.p).toFixed(1)+'</td>'
+      + '<td class="num">'+pct(it.c.prob,0)+'</td>'
+      + '<td class="num">'+pct(it.c.gp)+'</td>'
+      + '<td class="num"><b>'+fmt(it.c.ev)+'</b></td>'
+      + '<td>'+chip+'</td></tr>';
+  }
+  document.getElementById('poolBody').innerHTML = rows;
+  document.getElementById('kpiPool').innerHTML =
+      '<div class="kpi"><div class="t">在跟项目</div><div class="v">'+PROJECTS.length+' 个</div><div class="d" style="color:var(--ink-3)">合计规模 '+fmt(sumBase)+' 万</div></div>'
+    + '<div class="kpi"><div class="t">平均中标概率</div><div class="v">'+pct(wProb/PROJECTS.length,0)+'</div><div class="d" style="color:var(--ink-3)">6 维度加权 + 逻辑回归</div></div>'
+    + '<div class="kpi"><div class="t">期望毛利合计</div><div class="v">'+fmt(sumEv)+' 万</div><div class="d" style="color:var(--ink-3)">基准报价系数 1.25</div></div>'
+    + '<div class="kpi"><div class="t">毛利率底线</div><div class="v">'+(GP_FLOOR*100).toFixed(0)+'%</div><div class="d" style="color:var(--ok)">低于此值需例外审批</div></div>';
+}
+
+/* ---------- P2 维度 ---------- */
+function renderDims(){
+  var p = PROJECTS[curIdx], h='', s = wScore(p);
+  for(var i=0;i<6;i++){
+    h += '<div class="dim"><div class="dname">'+DIM_NAMES[i]+'</div>'
+       + '<div class="dbar"><i style="width:'+p.dims[i]+'%"></i></div>'
+       + '<div class="dval">'+p.dims[i]+'</div>'
+       + '<div class="dw">'+(DIM_W[i]*100).toFixed(0)+'%</div></div>'
+       + '<div style="font-size:11px;color:#8a94a6;margin:-2px 0 8px 118px">'+DIM_DESC[i]+'</div>';
+  }
+  document.getElementById('dimBox').innerHTML = h;
+  document.getElementById('p2name').textContent = p.id + ' ' + p.name;
+  document.getElementById('p2score').textContent = s.toFixed(1) + ' 分';
+  document.getElementById('p2prob').textContent  = pct(logistic(s),1);
+}
+
+/* ---------- P3 测算 ---------- */
+function renderCalc(){
+  var p = PROJECTS[curIdx];
+  var c = calc(p, markup, reserve);
+  document.getElementById('mkVal').textContent = markup.toFixed(2);
+  document.getElementById('rsVal').textContent = (reserve*100).toFixed(1)+'%';
+  document.getElementById('outBox').innerHTML =
+      '<div class="kpi"><div class="t">报价</div><div class="v">'+fmt(c.quote)+' 万</div><div class="d" style="color:var(--ink-3)">系数 '+markup.toFixed(2)+'</div></div>'
+    + '<div class="kpi"><div class="t">含准备金成本</div><div class="v">'+fmt(c.cost)+' 万</div><div class="d" style="color:var(--ink-3)">计提 '+pct(reserve)+'</div></div>'
+    + '<div class="kpi"><div class="t">毛利率</div><div class="v" style="color:'+(c.gp>=GP_FLOOR?'var(--ok)':'var(--bad)')+'">'+pct(c.gp)+'</div><div class="d" style="color:var(--ink-3)">底线 '+(GP_FLOOR*100).toFixed(0)+'%</div></div>'
+    + '<div class="kpi"><div class="t">期望毛利额</div><div class="v">'+fmt(c.ev)+' 万</div><div class="d" style="color:var(--ink-3)">含概率 '+pct(c.prob,0)+'</div></div>';
+  document.getElementById('gpFlag').innerHTML = (c.gp>=GP_FLOOR)
+    ? '<div class="flag pass">✅ 毛利率 '+pct(c.gp)+' ≥ 底线 '+(GP_FLOOR*100).toFixed(0)+'%，该报价可进入投标审批流程。</div>'
+    : '<div class="flag fail">⚠️ 毛利率 '+pct(c.gp)+' 低于底线 '+(GP_FLOOR*100).toFixed(0)+'%，按红线要求需走例外审批——不能由一线自行决定低价抢标。</div>';
+  drawCurves(p);
+}
+
+function drawCurves(p){
+  var ptsG='', ptsP='', ptsE='', best={mk:0, ev:-1};
+  var lo=1.05, hi=1.45, N=40;
+  for(var i=0;i<=N;i++){
+    var mk = lo + (hi-lo)*i/N;
+    var c = calc(p, mk, reserve);
+    var x = 46 + (mk-lo)/(hi-lo)*(650-46);
+    var yG = 210 - Math.min(1, c.gp/0.45)*190;      // 毛利率 0-45%
+    var yP = 210 - c.prob*190;                       // 概率 0-1
+    var yE = 210 - Math.min(1, c.ev/(p.base*0.30))*190; // 期望毛利 0 ~ 30% 规模
+    ptsG += x.toFixed(1)+','+yG.toFixed(1)+' ';
+    ptsP += x.toFixed(1)+','+yP.toFixed(1)+' ';
+    ptsE += x.toFixed(1)+','+yE.toFixed(1)+' ';
+    if(c.ev > best.ev) best = {mk:mk, ev:c.ev};
+  }
+  document.getElementById('curveGm').setAttribute('points', ptsG.trim());
+  document.getElementById('curveP').setAttribute('points', ptsP.trim());
+  document.getElementById('curveEv').setAttribute('points', ptsE.trim());
+  var cNow = calc(p, markup, reserve);
+  var xN = 46 + (markup-lo)/(hi-lo)*(650-46);
+  var yN = 210 - Math.min(1, cNow.ev/(p.base*0.30))*190;
+  var dot = document.getElementById('dotNow');
+  dot.setAttribute('cx', xN.toFixed(1)); dot.setAttribute('cy', yN.toFixed(1));
+  document.getElementById('bestHint').innerHTML =
+    '当前项目在计提 '+pct(reserve)+' 风险准备金下，<b>期望毛利最大化的报价系数约 '+best.mk.toFixed(2)+'</b>（期望毛利 '+fmt(best.ev)+' 万）。'
+    + '蓝点为你当前设定的 '+markup.toFixed(2)+'，可拖动滑块观察蓝点在曲线上的移动。'
+    + '注意：最优点会随「关系成熟度 / 竞争态势」评分变化——<b>评分为什么是六个维度而不是一个，这就是原因</b>。';
+}
+
+/* ---------- P4 三情景 ---------- */
+function renderScen(){
+  var p = PROJECTS[curIdx];
+  var S = [
+    {n:'保守（高毛利）', mk:1.35, d:'毛利率优先，牺牲部分中标概率'},
+    {n:'基准（推荐）',   mk:1.25, d:'平衡点，默认投标口径'},
+    {n:'激进（抢标）',   mk:1.15, d:'压价换概率，用于战略卡位'}
+  ];
+  var rows='', best=null;
+  for(var i=0;i<S.length;i++){
+    var c = calc(p, S[i].mk, reserve);
+    if(!best || c.ev>best.ev) best = {n:S[i].n, mk:S[i].mk, c:c};
+    var fail = c.gp < GP_FLOOR;
+    rows += '<tr><td><b>'+S[i].n+'</b><br><span style="font-size:10.5px;color:#8a94a6">'+S[i].d+'</span></td>'
+      + '<td class="num">'+S[i].mk.toFixed(2)+'</td>'
+      + '<td class="num">'+fmt(c.quote)+'</td>'
+      + '<td class="num" style="color:'+(fail?'var(--bad)':'var(--ok)')+';font-weight:700">'+pct(c.gp)+(fail?' ⚠':'')+'</td>'
+      + '<td class="num">'+pct(c.prob,0)+'</td>'
+      + '<td class="num"><b>'+fmt(c.ev)+'</b></td>'
+      + '<td>'+(fail?'低于毛利率底线，需例外审批':'符合底线，可直接投')+'</td></tr>';
+  }
+  document.getElementById('scBody').innerHTML = rows;
+  document.getElementById('scConcl').innerHTML =
+    '当前项目 <b>'+p.id+' '+p.name+'</b>：<b>期望毛利最高的是「'+best.n+'」</b>（报价系数 '+best.mk.toFixed(2)+'，期望毛利 '+fmt(best.c.ev)+' 万，毛利率 '+pct(best.c.gp)+'，中标概率 '+pct(best.c.prob,0)+'）。<br>'
+    + '若选择激进抢标，毛利率将被压到 '+pct(calc(p,1.15,reserve).gp)+'，'
+    + (calc(p,1.15,reserve).gp<GP_FLOOR ? '<b>已跌破 18% 公司底线</b>——除非该项目是战略卡位（进新客户 / 新区域），否则不建议。'
+                                        : '仍在底线之上，可作为战略卡位选项，但需评估交付产能挤占。');
+}
+
+/* ---------- P5 决策 ---------- */
+function renderDecide(){
+  var list = PROJECTS.map(function(p,i){ return {p:p, c:calc(p, BASE_MARKUP, BASE_RESERVE)}; })
+                     .sort(function(a,b){ return b.c.ev - a.c.ev; });
+  var top = list[0], low = list[list.length-1];
+  document.getElementById('conclBox').innerHTML =
+    '① 6 个在跟项目按<b>期望毛利额</b>排序，<b>主攻 '+top.p.id+'（'+fmt(top.c.ev)+' 万）与 '+list[1].p.id+'（'+fmt(list[1].c.ev)+' 万）</b>，两者合计占期望毛利的 '
+    + (( (top.c.ev+list[1].c.ev) / list.reduce(function(s,x){return s+x.c.ev;},0) )*100).toFixed(0) + '%；<br>'
+    + '② <b>'+low.p.id+'</b> 期望毛利仅 '+fmt(low.c.ev)+' 万（历史中标率 '+low.p.dims[3]+' 分、关系成熟度 '+low.p.dims[4]+' 分）——<b>规模不等于价值，赢了才值钱，赢不了就是沉没的投标成本</b>；<br>'
+    + '③ 报价策略：<b>不追求最高毛利率，追求期望毛利最大</b>；所有报价先过 18% 毛利率底线，再谈竞争；<br>'
+    + '④ 模型的真正产出不是那几个数字，而是<b>把"资源该投给谁"从拍脑袋变成可讨论、可追溯的排序</b>。';
+
+  document.getElementById('actBody').innerHTML =
+      '<tr><td>1</td><td>对 '+top.p.id+'、'+list[1].p.id+' 配置最优投标资源（售前 + 技术 + 商务），报价按期望毛利最优系数设定</td><td>能源事业部 + 售前</td><td>3 天内</td><td>两个主攻项目中标概率各 +5pp</td></tr>'
+    + '<tr><td>2</td><td>对 '+low.p.id+' 先补一次决策链技术交流（关系成熟度 '+low.p.dims[4]+' → 目标 60+），一季度后再决定是否正式投标</td><td>政企事业部</td><td>1 个月内</td><td>避免在低胜率项目上消耗投标成本</td></tr>'
+    + '<tr><td>3</td><td><b>机制沉淀</b>：把 6 维度评分表 + 报价测算模板固化为投标前置流程，未评分未测算的项目不予立项</td><td>经营分析（本人）</td><td>本月上线</td><td>投标资源从"按规模分"改为"按期望毛利分"</td></tr>'
+    + '<tr><td>4</td><td>输单项目回填归因（价格 / 技术 / 关系 / 资质），反哺历史中标率维度</td><td>RevOps + 各事业部</td><td>持续</td><td>概率模型每季度用真实样本重新拟合</td></tr>';
+}
+
+/* ---------- 交互 ---------- */
+function pick(i){
+  curIdx = i;
+  renderPool(i); renderDims(); renderCalc(); renderScen(); renderDecide();
+}
+(function(){
+  var mk = document.getElementById('mk'), rs = document.getElementById('rs');
+  mk.oninput = function(){ markup = parseInt(mk.value,10)/100; renderCalc(); renderScen(); };
+  rs.oninput = function(){ reserve = parseInt(rs.value,10)/1000; renderCalc(); renderScen(); };
+  var navs = document.querySelectorAll('.snav');
+  for(var i=0;i<navs.length;i++){
+    navs[i].onclick = (function(n){
+      return function(){
+        var all = document.querySelectorAll('.snav');
+        for(var k=0;k<all.length;k++) all[k].className='snav';
+        n.className='snav on';
+        var ps = document.querySelectorAll('.panel');
+        for(var k=0;k<ps.length;k++) ps[k].className='panel';
+        document.getElementById(n.getAttribute('data-p')).className='panel on';
+      };
+    })(navs[i]);
+  }
+})();
+
+pick(0);
+</script>
+</body>
+</html>
